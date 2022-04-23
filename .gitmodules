@@ -1,3 +1,6 @@
 [submodule "extern/SDL2"]
 	path = extern/SDL2
 	url = https://github.com/libsdl-org/SDL
+[submodule "extern/volk"]
+	path = extern/volk
+	url = https://github.com/zeux/volk
