@@ -2,7 +2,7 @@
 #include <SDL.h>
 
 int main(int argc, char *argv[]) {
-    SDL_Window *window = SDL_CreateWindow("vortex engine ()", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN);
+    SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN);
 
     char running = 1;
     while (running) {
