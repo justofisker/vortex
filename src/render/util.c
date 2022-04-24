@@ -7,16 +7,19 @@
 #include "SDL_vulkan.h"
 
 #ifndef NDEBUG
-
-static VkDebugReportCallbackEXT VE_S_DebugCallback = VK_NULL_HANDLE;
-
-static void VE_Render_CheckValidationSupport() {
+int VE_Render_CheckValidationSupport() {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, NULL);
     VkLayerProperties *avaiableLayers = malloc(sizeof(VkLayerProperties) * layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, avaiableLayers);
-
+    for (int i = 0; i < layerCount; ++i) {
+        if (strcmp("VK_LAYER_KHRONOS_validation", avaiableLayers[i].layerName) == 0) {
+            free(avaiableLayers);
+            return 1;
+        }
+    }
     free(avaiableLayers);
+    return 0;
 }
 
 static VkBool32 VKAPI_CALL VE_Render_DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
@@ -39,12 +42,14 @@ static VkBool32 VKAPI_CALL VE_Render_DebugReportCallback(VkDebugReportFlagsEXT f
     return VK_FALSE;
 }
 
-static void VE_Render_RegisterDebugReportCallback() {
+void VE_Render_RegisterDebugReportCallback() {
     VkDebugReportCallbackCreateInfoEXT createInfo = { VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT };
     createInfo.flags = VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT;
+    createInfo.pNext = NULL;
     createInfo.pfnCallback = VE_Render_DebugReportCallback;
+    createInfo.pUserData = NULL;
 
-    vkCreateDebugReportCallbackEXT(VE_G_Instance, &createInfo, NULL, &VE_S_DebugCallback);
+    vkCreateDebugReportCallbackEXT(VE_G_Instance, &createInfo, NULL, &VE_G_DebugCallback);
 }
 #endif
 
@@ -58,6 +63,9 @@ void VE_Render_CreateInstance()
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
+    unsigned int sdlInstanceCount;
+    SDL_Vulkan_GetInstanceExtensions(VE_G_Window, &sdlInstanceCount, NULL);
+
 	VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 	createInfo.pNext;
 	createInfo.flags;
@@ -65,25 +73,25 @@ void VE_Render_CreateInstance()
 #ifdef NDEBUG
 	createInfo.enabledLayerCount = 0;
 	createInfo.ppEnabledLayerNames = NULL;
-    const char *instanceExtensions[] = { NULL, NULL };
+    const char **instanceExtensions = malloc(sizeof(char*) * sdlInstanceCount);
+    createInfo.enabledExtensionCount = sdlInstanceCount;
 #else
     const char* debugLayers[] = {"VK_LAYER_KHRONOS_validation" };
     createInfo.enabledLayerCount = sizeof(debugLayers[0]) / sizeof(debugLayers);
     createInfo.ppEnabledLayerNames = debugLayers;
-    const char *instanceExtensions[] = { NULL, NULL, VK_EXT_DEBUG_REPORT_EXTENSION_NAME };
+    const char **instanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
+    instanceExtensions[sdlInstanceCount] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+    createInfo.enabledExtensionCount = sdlInstanceCount + 1;
 #endif // NDEBUG
-    createInfo.enabledExtensionCount = sizeof(instanceExtensions[0]) / sizeof(instanceExtensions);
     createInfo.ppEnabledExtensionNames = instanceExtensions;
-    unsigned int sdlInstanceCount;
-    SDL_Vulkan_GetInstanceExtensions(VE_G_Window, &sdlInstanceCount, NULL);
-    assert(sdlInstanceCount == 2);
     SDL_Vulkan_GetInstanceExtensions(VE_G_Window, &sdlInstanceCount, instanceExtensions );
 	vkCreateInstance(&createInfo, NULL, &VE_G_Instance);
 
     volkLoadInstanceOnly(VE_G_Instance);
+    free(instanceExtensions);
 }
 
-void VE_Render_PickPhysicalDevice() {
+void VE_Render_PickPhysicalDeviceAndQueues() {
     uint32_t count;
     vkEnumeratePhysicalDevices(VE_G_Instance, &count, NULL);
     VkPhysicalDevice *devices = malloc(sizeof(VkPhysicalDevice) * count);
@@ -94,6 +102,8 @@ void VE_Render_PickPhysicalDevice() {
         break;
     }
     free(devices);
+
+    // TODO: Implement queue selection
 }
 
 void VE_Render_CreateDevice()
