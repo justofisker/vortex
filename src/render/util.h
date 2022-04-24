@@ -2,6 +2,7 @@
 #define RENDER_UTIL_H
 
 void VE_Render_CreateInstance();
+void VE_Render_PickPhysicalDevice();
 void VE_Render_CreateDevice();
 void VE_Render_CreateSurface();
 

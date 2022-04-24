@@ -6,13 +6,12 @@
 #include "util.h"
 #include "globals.h"
 
-static SDL_Window *window;
-
-void VE_RenderInit(SDL_Window *_window)
+void VE_RenderInit(SDL_Window *window)
 {
-	window = _window;
+	VE_G_Window = window;
 	volkInitialize();
 	VE_Render_CreateInstance();
+    VE_Render_PickPhysicalDevice();
 }
 
 void VE_RenderDestroy()

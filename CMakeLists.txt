@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.22)
 project(vortex)
 
-add_executable(vortex WIN32
+add_executable(vortex
     "src/main.c"
     "src/render/render.c"
     "src/render/render.h"
@@ -29,10 +29,8 @@ target_link_libraries(vortex PRIVATE SDL2 SDL2main volk)
 # Otherwise try the environment variable.
 find_package(Vulkan QUIET)
 if(TARGET Vulkan::Vulkan)
-    message(" Vulkan as target")
   target_link_libraries(vortex PUBLIC Vulkan::Vulkan)
 elseif(DEFINED ENV{VULKAN_SDK})
-    message(" Vulkan as path")
   target_include_directories(vortex PUBLIC "$ENV{VULKAN_SDK}/include")
 endif()
 
