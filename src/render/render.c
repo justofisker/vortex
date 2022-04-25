@@ -19,10 +19,12 @@ void VE_Render_Init(SDL_Window *window)
 #endif // NDEBUG
     VE_Render_PickPhysicalDeviceAndQueues();
     VE_Render_CreateDevice();
+    VE_Render_CreateSurface();
 }
 
 void VE_Render_Destroy()
 {
+    vkDestroySurfaceKHR(VE_G_Instance, VE_G_Surface, NULL);
     vkDestroyDevice(VE_G_Device, NULL);
 #ifndef NDEBUG
     vkDestroyDebugReportCallbackEXT(VE_G_Instance, VE_G_DebugCallback, NULL);

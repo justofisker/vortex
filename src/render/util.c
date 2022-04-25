@@ -150,4 +150,8 @@ void VE_Render_CreateDevice() {
 
 void VE_Render_CreateSurface()
 {
+    if(!SDL_Vulkan_CreateSurface(VE_G_Window, VE_G_Instance, &VE_G_Surface)) {
+        fprintf(stderr, "Failed to create surface!");
+        exit(1);
+    }
 }
