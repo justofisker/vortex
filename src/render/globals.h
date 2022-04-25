@@ -9,6 +9,7 @@ extern SDL_Window *VE_G_Window;
 extern VkInstance VE_G_Instance;
 extern VkPhysicalDevice VE_G_PhysicalDevice;
 extern VkDevice VE_G_Device;
+extern VkQueue VE_G_GraphicsQueue;
 extern VkSurfaceKHR VE_G_Surface;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;

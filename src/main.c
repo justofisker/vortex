@@ -15,6 +15,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    VE_Render_Destroy();
     SDL_DestroyWindow(window);
     return 0;
 }

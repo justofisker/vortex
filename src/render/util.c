@@ -24,8 +24,8 @@ int VE_Render_CheckValidationSupport() {
 
 static VkBool32 VKAPI_CALL VE_Render_DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
 {
-    if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-        return VK_FALSE;
+//    if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+//        return VK_FALSE;
 
     const char* type =
             (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
@@ -79,13 +79,13 @@ void VE_Render_CreateInstance()
     const char* debugLayers[] = {"VK_LAYER_KHRONOS_validation" };
     createInfo.enabledLayerCount = sizeof(debugLayers[0]) / sizeof(debugLayers);
     createInfo.ppEnabledLayerNames = debugLayers;
-    const char **instanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
+    char **instanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
     instanceExtensions[sdlInstanceCount] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
     createInfo.enabledExtensionCount = sdlInstanceCount + 1;
 #endif // NDEBUG
     createInfo.ppEnabledExtensionNames = instanceExtensions;
     SDL_Vulkan_GetInstanceExtensions(VE_G_Window, &sdlInstanceCount, instanceExtensions );
-	vkCreateInstance(&createInfo, NULL, &VE_G_Instance);
+    vkCreateInstance(&createInfo, NULL, &VE_G_Instance);
 
     volkLoadInstanceOnly(VE_G_Instance);
     free(instanceExtensions);
@@ -98,16 +98,54 @@ void VE_Render_PickPhysicalDeviceAndQueues() {
     vkEnumeratePhysicalDevices(VE_G_Instance, &count, devices);
     for (uint32_t i = 0; i < count; ++i) {
         // TODO: Implement physical device picking logic
-        VE_G_PhysicalDevice = devices[i];
-        break;
+        uint32_t queueGraphicsIndex = UINT32_MAX;
+        uint32_t queueFamilyCount;
+        vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &queueFamilyCount, NULL);
+        VkQueueFamilyProperties *queueFamilyProperties = malloc(sizeof(VkQueueFamilyProperties) * queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &queueFamilyCount, queueFamilyProperties);
+        for (uint32_t j = 0; j < queueFamilyCount; ++j) {
+            if (queueFamilyProperties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                queueGraphicsIndex = j;
+        }
+        free(queueFamilyProperties);
+        if (queueGraphicsIndex != UINT32_MAX) {
+            VE_G_PhysicalDevice = devices[i];
+            VE_G_GraphicsQueue = (VkQueue)queueGraphicsIndex; // Not like the nicest thing to do but space optimal
+            break;
+        }
+    }
+    if (!VE_G_PhysicalDevice) {
+        fprintf(stderr, "Failed to find suitable graphics card!\n");
+        exit(1);
     }
     free(devices);
-
-    // TODO: Implement queue selection
 }
 
-void VE_Render_CreateDevice()
-{
+void VE_Render_CreateDevice() {
+    VkPhysicalDeviceFeatures enabledFeatures = {0};
+
+    float priority = 1.0f;
+    VkDeviceQueueCreateInfo queueCreateInfo = {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+    queueCreateInfo.queueFamilyIndex = VE_G_GraphicsQueue;
+    queueCreateInfo.queueCount = 1;
+    queueCreateInfo.pQueuePriorities = &priority;
+
+    VkDeviceCreateInfo createInfo = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+    createInfo.queueCreateInfoCount = 1;
+    createInfo.pQueueCreateInfos = &queueCreateInfo;
+    createInfo.pEnabledFeatures = &enabledFeatures;
+
+#ifndef NDEBUG
+    const char *debugLayers[] = {"VK_LAYER_KHRONOS_validation"};
+    createInfo.ppEnabledLayerNames = debugLayers;
+    createInfo.enabledLayerCount = sizeof(debugLayers[0]) / sizeof(debugLayers);
+#endif
+
+    vkCreateDevice(VE_G_PhysicalDevice, &createInfo, NULL, &VE_G_Device);
+
+    volkLoadDevice(VE_G_Device);
+
+    vkGetDeviceQueue(VE_G_Device, queueCreateInfo.queueFamilyIndex, 0, &VE_G_GraphicsQueue);
 }
 
 void VE_Render_CreateSurface()
