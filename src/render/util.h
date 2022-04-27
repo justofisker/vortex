@@ -5,6 +5,7 @@ void VE_Render_CreateInstance();
 void VE_Render_PickPhysicalDeviceAndQueues();
 void VE_Render_CreateDevice();
 void VE_Render_CreateSurface();
+void VE_Render_CreateSwapchain();
 
 #ifndef NDEBUG
 int VE_Render_CheckValidationSupport();
