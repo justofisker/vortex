@@ -5,8 +5,8 @@ add_executable(vortex
     "src/main.c"
     "src/render/render.c"
     "src/render/render.h"
-    "src/render/util.c"
-    "src/render/util.h"
+    "src/render/init.c"
+    "src/render/init.h"
     "src/render/globals.c"
     "src/render/globals.h"
 )

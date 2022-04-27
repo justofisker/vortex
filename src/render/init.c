@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include "util.h"
+#include "init.h"
 #include "globals.h"
 #include "SDL_vulkan.h"
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <volk.h>
 #include <SDL_vulkan.h>
-#include "util.h"
+#include "init.h"
 #include "globals.h"
 
 void VE_Render_Init(SDL_Window *window)

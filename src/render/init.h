@@ -1,5 +1,5 @@
-#ifndef RENDER_UTIL_H
-#define RENDER_UTIL_H
+#ifndef RENDER_INIT_H
+#define RENDER_INIT_H
 
 void VE_Render_CreateInstance();
 void VE_Render_PickPhysicalDeviceAndQueues();
@@ -12,4 +12,4 @@ int VE_Render_CheckValidationSupport();
 void VE_Render_RegisterDebugReportCallback();
 #endif // NDEBUG
 
-#endif // RENDER_UTIL_H
+#endif // RENDER_INIT_H
