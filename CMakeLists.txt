@@ -9,6 +9,8 @@ add_executable(vortex
     "src/render/init.h"
     "src/render/globals.c"
     "src/render/globals.h"
+    "src/render/shader.c"
+    "src/render/shader.h"
 )
 
 option(BUILD_SHARED_LIBS "" ON)

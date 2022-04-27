@@ -15,6 +15,8 @@ extern VkQueue VE_G_GraphicsQueue;
 extern VkQueue VE_G_PresentQueue;
 extern VkSurfaceKHR VE_G_Surface;
 extern VkSwapchainKHR VE_G_Swapchain;
+extern VkFormat VE_G_SwapchainFormat;
+extern VkExtent2D VE_G_SwapchainExtent;
 extern uint32_t VE_G_SwapchainImageCount;
 extern VkImage *VE_G_pSwapchainImages;
 extern VkImageView *VE_G_pSwapchainImageViews;

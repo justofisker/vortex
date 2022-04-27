@@ -79,7 +79,7 @@ void VE_Render_CreateInstance()
     const char* ppDebugLayers[] = {"VK_LAYER_KHRONOS_validation" };
     createInfo.enabledLayerCount = sizeof(ppDebugLayers[0]) / sizeof(ppDebugLayers);
     createInfo.ppEnabledLayerNames = ppDebugLayers;
-    char **ppInstanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
+    const char **ppInstanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
     ppInstanceExtensions[sdlInstanceCount] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
     createInfo.enabledExtensionCount = sdlInstanceCount + 1;
 #endif // NDEBUG
@@ -189,8 +189,8 @@ void VE_Render_CreateDevice() {
 
     volkLoadDevice(VE_G_Device);
 
-    vkGetDeviceQueue(VE_G_Device, pQueueCreateInfo[0].queueFamilyIndex, 0, &VE_G_GraphicsQueue);
-    vkGetDeviceQueue(VE_G_Device, pQueueCreateInfo[1].queueFamilyIndex, 0, &VE_G_PresentQueue);
+    vkGetDeviceQueue(VE_G_Device, VE_G_GraphicsQueueIndex, 0, &VE_G_GraphicsQueue);
+    vkGetDeviceQueue(VE_G_Device, VE_G_PresentQueueIndex, 0, &VE_G_PresentQueue);
 }
 
 void VE_Render_CreateSurface()
@@ -215,6 +215,7 @@ void VE_Render_CreateSwapchain() {
         }
     }
     free(pAvailableFormats);
+    VE_G_SwapchainFormat = surfaceFormat.format;
 
     uint32_t availablePresentModesCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(VE_G_PhysicalDevice, VE_G_Surface, &availablePresentModesCount, NULL);
@@ -234,7 +235,7 @@ void VE_Render_CreateSwapchain() {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VE_G_PhysicalDevice, VE_G_Surface, &surfaceCapabilities);
     int w, h;
     SDL_Vulkan_GetDrawableSize(VE_G_Window, &w, &h);
-    VkExtent2D extent = {
+    VE_G_SwapchainExtent = (VkExtent2D){
             min(max(w, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width),
             min(max(h, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height),
     };
@@ -248,7 +249,7 @@ void VE_Render_CreateSwapchain() {
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
-    createInfo.imageExtent = extent;
+    createInfo.imageExtent = VE_G_SwapchainExtent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
