@@ -15,6 +15,11 @@ VkExtent2D VE_G_SwapchainExtent = { 0 };
 uint32_t VE_G_SwapchainImageCount = 0;
 VkImage *VE_G_pSwapchainImages = NULL;
 VkImageView *VE_G_pSwapchainImageViews = NULL;
+VkCommandPool VE_G_CommandPool = VK_NULL_HANDLE;
+VkCommandBuffer *VE_G_pCommandBuffers = NULL;
+VkSemaphore VE_G_ImageAvailableSemaphore = VK_NULL_HANDLE;
+VkSemaphore VE_G_RenderFinishedSemaphore = VK_NULL_HANDLE;
+VkFence VE_G_InFlightFence = VK_NULL_HANDLE;
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG

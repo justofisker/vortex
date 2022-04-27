@@ -15,6 +15,9 @@ int main(int argc, char *argv[]) {
             if (event.type == SDL_QUIT)
                 running = 0;
         }
+        VE_Render_BeginFrame();
+        VE_Render_Draw(pTriangleShader);
+        VE_Render_EndFrame();
     }
 
     VE_Render_DestroyShader(pTriangleShader);

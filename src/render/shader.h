@@ -3,7 +3,14 @@
 
 #include <stdint.h>
 
-typedef struct VE_Shader VE_Shader;
+#define VK_NO_PROTOTYPES
+#include <vulkan/vulkan.h>
+typedef struct VE_Shader {
+    VkPipeline pipeline;
+    VkRenderPass renderPass;
+    VkPipelineLayout layout;
+    VkFramebuffer *pFramebuffers;
+} VE_Shader;
 
 VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragmentPath);
 void VE_Render_DestroyShader(VE_Shader *pShader);

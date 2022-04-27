@@ -22,11 +22,7 @@ int VE_Render_CheckValidationSupport() {
     return 0;
 }
 
-static VkBool32 VKAPI_CALL VE_Render_DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
-{
-//    if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-//        return VK_FALSE;
-
+static VkBool32 VKAPI_CALL VE_Render_DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData) {
     const char* type =
             (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
             ? "ERROR"
@@ -53,8 +49,7 @@ void VE_Render_RegisterDebugReportCallback() {
 }
 #endif
 
-void VE_Render_CreateInstance()
-{
+void VE_Render_CreateInstance() {
 	VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 	appInfo.pNext;
 	appInfo.pApplicationName = "vortex test";
@@ -147,7 +142,7 @@ void VE_Render_PickPhysicalDeviceAndQueues() {
         free(pAvailableExtensions);
 
         VE_G_PhysicalDevice = devices[i];
-        VE_G_GraphicsQueueIndex = queueGraphicsIndex; // Not like the nicest thing to do but space optimal
+        VE_G_GraphicsQueueIndex = queueGraphicsIndex;
         VE_G_PresentQueueIndex = queuePresentIndex;
     }
     if (!VE_G_PhysicalDevice) {
@@ -208,8 +203,7 @@ void VE_Render_CreateSwapchain() {
     vkGetPhysicalDeviceSurfaceFormatsKHR(VE_G_PhysicalDevice, VE_G_Surface, &availableFormatsCount, pAvailableFormats);
     VkSurfaceFormatKHR surfaceFormat = pAvailableFormats[0];
     for (uint32_t i = 0; i < availableFormatsCount; ++i) {
-        if (pAvailableFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB && pAvailableFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-        {
+        if (pAvailableFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB && pAvailableFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             surfaceFormat = pAvailableFormats[i];
             break;
         }
@@ -223,8 +217,7 @@ void VE_Render_CreateSwapchain() {
     vkGetPhysicalDeviceSurfacePresentModesKHR(VE_G_PhysicalDevice, VE_G_Surface, &availablePresentModesCount, pAvailablePresentModes);
     VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
     for (uint32_t i = 0; i < availablePresentModesCount; ++i) {
-        if (pAvailablePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
-        {
+        if (pAvailablePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
             presentMode = pAvailablePresentModes[i];
             break;
         }
@@ -294,4 +287,30 @@ void VE_Render_CreateSwapchain() {
 
         vkCreateImageView(VE_G_Device, &imageViewCreateInfo, NULL, &VE_G_pSwapchainImageViews[i]);
     }
+}
+
+void VE_Render_CreateCommandPool() {
+    VkCommandPoolCreateInfo poolInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    poolInfo.queueFamilyIndex = VE_G_GraphicsQueueIndex;
+
+    vkCreateCommandPool(VE_G_Device, &poolInfo, NULL, &VE_G_CommandPool);
+
+    VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+    allocInfo.commandPool = VE_G_CommandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = VE_G_SwapchainImageCount;
+
+    VE_G_pCommandBuffers = malloc(sizeof(VkCommandBuffer) * VE_G_SwapchainImageCount);
+    vkAllocateCommandBuffers(VE_G_Device, &allocInfo, VE_G_pCommandBuffers);
+}
+
+void VE_Render_CreateSyncObjects() {
+    VkSemaphoreCreateInfo semaphoreInfo = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+    VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    vkCreateSemaphore(VE_G_Device, &semaphoreInfo, NULL, &VE_G_ImageAvailableSemaphore);
+    vkCreateSemaphore(VE_G_Device, &semaphoreInfo, NULL, &VE_G_RenderFinishedSemaphore);
+    vkCreateFence(VE_G_Device, &fenceInfo, NULL, &VE_G_InFlightFence);
 }

@@ -7,12 +7,6 @@
 
 #include <stdio.h>
 
-struct VE_Shader {
-    VkPipeline pipeline;
-    VkRenderPass renderPass;
-    VkPipelineLayout layout;
-};
-
 static char *VE_Util_ReadFile(const char *path, uint32_t *size) {
     FILE* file;
     file = fopen(path, "rb");
@@ -33,7 +27,7 @@ static char *VE_Util_ReadFile(const char *path, uint32_t *size) {
     return content;
 }
 
-VkShaderModule VE_Render_CreateShaderModule(void* pData, uint32_t size) {
+VkShaderModule VE_Render_CreateShaderModule(uint32_t* pData, uint32_t size) {
     VkShaderModuleCreateInfo createInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
     createInfo.codeSize = size;
     createInfo.pCode = pData;
@@ -46,9 +40,9 @@ VkShaderModule VE_Render_CreateShaderModule(void* pData, uint32_t size) {
 
 VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragmentPath) {
     uint32_t vertexSourceSize;
-    const uint32_t *pVertexSource = VE_Util_ReadFile(pVertexPath, &vertexSourceSize);
+    uint32_t *pVertexSource =  (uint32_t*) VE_Util_ReadFile(pVertexPath, &vertexSourceSize);
     uint32_t fragmentSourceSize;
-    const uint32_t *pFragmentSource = VE_Util_ReadFile(pFragmentPath, &fragmentSourceSize);
+    uint32_t *pFragmentSource = (uint32_t*) VE_Util_ReadFile(pFragmentPath, &fragmentSourceSize);
     VkShaderModule vertexShaderModule = VE_Render_CreateShaderModule(pVertexSource, vertexSourceSize);
     VkShaderModule fragmentShaderModule = VE_Render_CreateShaderModule(pFragmentSource, fragmentSourceSize);
 
@@ -162,11 +156,21 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
 
+    VkSubpassDependency dependency = { 0 };
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
     VkRenderPassCreateInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
     renderPassInfo.attachmentCount = 1;
     renderPassInfo.pAttachments = &colorAttachment;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
 
     vkCreateRenderPass(VE_G_Device, &renderPassInfo, NULL, &pShader->renderPass);
 
@@ -191,13 +195,29 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
 
     vkDestroyShaderModule(VE_G_Device, vertexShaderModule, NULL);
     vkDestroyShaderModule(VE_G_Device, fragmentShaderModule, NULL);
-    SDL_free(pVertexSource);
-    SDL_free(pFragmentSource);
+    free(pVertexSource);
+    free(pFragmentSource);
+
+    VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+    framebufferInfo.renderPass = pShader->renderPass;
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.width = VE_G_SwapchainExtent.width;
+    framebufferInfo.height = VE_G_SwapchainExtent.height;
+    framebufferInfo.layers = 1;
+
+    pShader->pFramebuffers = malloc(sizeof(VkFramebuffer) * VE_G_SwapchainImageCount);
+    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
+        framebufferInfo.pAttachments = &VE_G_pSwapchainImageViews[i];
+        vkCreateFramebuffer(VE_G_Device, &framebufferInfo, NULL, &pShader->pFramebuffers[i]);
+    }
 
     return pShader;
 }
 
 void VE_Render_DestroyShader(VE_Shader *pShader) {
+    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i)
+        vkDestroyFramebuffer(VE_G_Device, pShader->pFramebuffers[i], NULL);
+    free(pShader->pFramebuffers);
     vkDestroyPipeline(VE_G_Device, pShader->pipeline, NULL);
     vkDestroyPipelineLayout(VE_G_Device, pShader->layout, NULL);
     vkDestroyRenderPass(VE_G_Device, pShader->renderPass, NULL);

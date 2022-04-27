@@ -20,6 +20,11 @@ extern VkExtent2D VE_G_SwapchainExtent;
 extern uint32_t VE_G_SwapchainImageCount;
 extern VkImage *VE_G_pSwapchainImages;
 extern VkImageView *VE_G_pSwapchainImageViews;
+extern VkCommandPool VE_G_CommandPool;
+extern VkCommandBuffer *VE_G_pCommandBuffers;
+extern VkSemaphore VE_G_ImageAvailableSemaphore;
+extern VkSemaphore VE_G_RenderFinishedSemaphore;
+extern VkFence VE_G_InFlightFence;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG
