@@ -32,6 +32,8 @@ void VE_Render_Init(SDL_Window *window) {
 }
 
 void VE_Render_Destroy() {
+    vkDeviceWaitIdle(VE_G_Device);
+
     VE_Render_DestroyAllPrograms(1);
     for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
         vkDestroySemaphore(VE_G_Device, VE_G_pImageAvailableSemaphores[i], NULL);
@@ -72,13 +74,20 @@ static uint32_t imageIndex = 0;
 static uint32_t currentFrame = 0;
 
 void VE_Render_BeginFrame() {
-    vkAcquireNextImageKHR(VE_G_Device, VE_G_Swapchain, UINT64_MAX, VE_G_pImageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
-}
-
-void VE_Render_EndFrame() {
     vkWaitForFences(VE_G_Device, 1, &VE_G_pInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkResetFences(VE_G_Device, 1, &VE_G_pInFlightFences[currentFrame]);
 
+    VkResult result = vkAcquireNextImageKHR(VE_G_Device, VE_G_Swapchain, UINT64_MAX, VE_G_pImageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        VE_Render_Resize();
+    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        perror("Failed to acquire swapchain image!\n");
+        exit(-1);
+    }
+}
+
+void VE_Render_EndFrame() {
     VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 
     VkSemaphore waitSemaphores[] = { VE_G_pImageAvailableSemaphores[currentFrame] };
@@ -95,8 +104,7 @@ void VE_Render_EndFrame() {
 
     vkQueueSubmit(VE_G_GraphicsQueue, 1, &submitInfo, VE_G_pInFlightFences[currentFrame]);
 
-    VkPresentInfoKHR presentInfo = { 0 };
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
 
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
@@ -107,8 +115,6 @@ void VE_Render_EndFrame() {
     presentInfo.pResults = NULL;
 
     vkQueuePresentKHR(VE_G_PresentQueue, &presentInfo);
-
-    vkDeviceWaitIdle(VE_G_Device);
 
     currentFrame = (currentFrame + 1) % VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 }

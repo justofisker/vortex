@@ -220,6 +220,8 @@ VE_ProgramT *VE_Render_CreateProgram(const char *pVertexPath, const char *pFragm
 }
 
 void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
+    vkDeviceWaitIdle(VE_G_Device);
+
     uint32_t programIndex = UINT32_MAX;
     for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
         if (VE_G_ppPrograms[i] == pProgram) {
@@ -246,6 +248,8 @@ void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
 }
 
 void VE_Render_DestroyAllPrograms(char freeMemory) {
+    vkDeviceWaitIdle(VE_G_Device);
+
     for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
         for (uint32_t j = 0; j < VE_G_SwapchainImageCount; ++j)
             vkDestroyFramebuffer(VE_G_Device, VE_G_ppPrograms[i]->pFramebuffers[j], NULL);
