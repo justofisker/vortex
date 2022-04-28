@@ -4,23 +4,31 @@
 #include "render/shader.h"
 
 int main(int argc, char *argv[]) {
-    SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN);
+    SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
-    VE_Shader *pTriangleShader = VE_Render_CreateShader("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
+    VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
 
     char running = 1;
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT)
-                running = 0;
+            switch(event.type) {
+                case SDL_QUIT:
+                    running = 0;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        VE_Render_Resize();
+                    }
+                    break;
+            }
         }
         VE_Render_BeginFrame();
-        VE_Render_Draw(pTriangleShader);
+        VE_Render_Draw(pTriangleProgram);
         VE_Render_EndFrame();
     }
 
-    VE_Render_DestroyShader(pTriangleShader);
+    VE_Render_DestroyProgram(pTriangleProgram);
     VE_Render_Destroy();
     SDL_DestroyWindow(window);
     return 0;

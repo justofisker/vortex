@@ -4,6 +4,10 @@
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
 typedef struct SDL_Window SDL_Window;
+typedef struct VE_ProgramT VE_ProgramT;
+
+#define VE_RENDER_MAX_FRAMES_IN_FLIGHT 2
+#define VE_RENDER_MAX_PROGRAMS 128
 
 extern SDL_Window *VE_G_Window;
 extern VkInstance VE_G_Instance;
@@ -21,10 +25,12 @@ extern uint32_t VE_G_SwapchainImageCount;
 extern VkImage *VE_G_pSwapchainImages;
 extern VkImageView *VE_G_pSwapchainImageViews;
 extern VkCommandPool VE_G_CommandPool;
-extern VkCommandBuffer *VE_G_pCommandBuffers;
-extern VkSemaphore VE_G_ImageAvailableSemaphore;
-extern VkSemaphore VE_G_RenderFinishedSemaphore;
-extern VkFence VE_G_InFlightFence;
+extern VkCommandBuffer VE_G_pCommandBuffers[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+extern VkSemaphore VE_G_pImageAvailableSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+extern VkSemaphore VE_G_pRenderFinishedSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+extern VkFence VE_G_pInFlightFences[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+extern VE_ProgramT *VE_G_ppPrograms[VE_RENDER_MAX_PROGRAMS];
+extern uint32_t VE_G_ProgramCount;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG

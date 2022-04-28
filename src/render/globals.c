@@ -16,10 +16,12 @@ uint32_t VE_G_SwapchainImageCount = 0;
 VkImage *VE_G_pSwapchainImages = NULL;
 VkImageView *VE_G_pSwapchainImageViews = NULL;
 VkCommandPool VE_G_CommandPool = VK_NULL_HANDLE;
-VkCommandBuffer *VE_G_pCommandBuffers = NULL;
-VkSemaphore VE_G_ImageAvailableSemaphore = VK_NULL_HANDLE;
-VkSemaphore VE_G_RenderFinishedSemaphore = VK_NULL_HANDLE;
-VkFence VE_G_InFlightFence = VK_NULL_HANDLE;
+VkCommandBuffer VE_G_pCommandBuffers[VE_RENDER_MAX_FRAMES_IN_FLIGHT] = {VK_NULL_HANDLE };
+VkSemaphore VE_G_pImageAvailableSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT] = {VK_NULL_HANDLE };
+VkSemaphore VE_G_pRenderFinishedSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT] = {VK_NULL_HANDLE };
+VkFence VE_G_pInFlightFences[VE_RENDER_MAX_FRAMES_IN_FLIGHT] = {VK_NULL_HANDLE };
+VE_ProgramT *VE_G_ppPrograms[VE_RENDER_MAX_PROGRAMS] = { NULL };
+uint32_t VE_G_ProgramCount = 0;
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG

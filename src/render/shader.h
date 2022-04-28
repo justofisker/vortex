@@ -5,15 +5,18 @@
 
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
-typedef struct VE_Shader {
+typedef struct VE_ProgramT {
     VkPipeline pipeline;
     VkRenderPass renderPass;
     VkPipelineLayout layout;
     VkFramebuffer *pFramebuffers;
-} VE_Shader;
+    const char *pVertexPath;
+    const char *pFragmentPath;
+} VE_ProgramT;
 
-VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragmentPath);
-void VE_Render_DestroyShader(VE_Shader *pShader);
-void VE_Render_DestroyShaders(VE_Shader **ppShaders, uint32_t count);
+VE_ProgramT *VE_Render_CreateProgram(const char *pVertexPath, const char *pFragmentPath);
+void VE_Render_DestroyProgram(VE_ProgramT *pProgram);
+void VE_Render_DestroyAllPrograms(char freeMemory);
+void VE_Render_RecreateAllPrograms();
 
 #endif //RENDER_SHADER_H

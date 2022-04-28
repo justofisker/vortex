@@ -38,7 +38,7 @@ VkShaderModule VE_Render_CreateShaderModule(uint32_t* pData, uint32_t size) {
     return shaderModule;
 }
 
-VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragmentPath) {
+static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char *pVertexPath, const char *pFragmentPath) {
     uint32_t vertexSourceSize;
     uint32_t *pVertexSource =  (uint32_t*) VE_Util_ReadFile(pVertexPath, &vertexSourceSize);
     uint32_t fragmentSourceSize;
@@ -126,8 +126,6 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
-    VE_Shader *pShader = malloc(sizeof(VE_Shader));
-
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
@@ -135,7 +133,7 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = NULL;
 
-    vkCreatePipelineLayout(VE_G_Device, &pipelineLayoutInfo, NULL, &pShader->layout);
+    vkCreatePipelineLayout(VE_G_Device, &pipelineLayoutInfo, NULL, &pProgram->layout);
 
     VkAttachmentDescription colorAttachment = { 0 };
     colorAttachment.format = VE_G_SwapchainFormat;
@@ -172,7 +170,7 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    vkCreateRenderPass(VE_G_Device, &renderPassInfo, NULL, &pShader->renderPass);
+    vkCreateRenderPass(VE_G_Device, &renderPassInfo, NULL, &pProgram->renderPass);
 
     VkGraphicsPipelineCreateInfo pipelineInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
     pipelineInfo.stageCount = 2;
@@ -185,13 +183,13 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
     pipelineInfo.pDepthStencilState = NULL;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = NULL;
-    pipelineInfo.layout = pShader->layout;
-    pipelineInfo.renderPass = pShader->renderPass;
+    pipelineInfo.layout = pProgram->layout;
+    pipelineInfo.renderPass = pProgram->renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    vkCreateGraphicsPipelines(VE_G_Device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pShader->pipeline);
+    vkCreateGraphicsPipelines(VE_G_Device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &pProgram->pipeline);
 
     vkDestroyShaderModule(VE_G_Device, vertexShaderModule, NULL);
     vkDestroyShaderModule(VE_G_Device, fragmentShaderModule, NULL);
@@ -199,31 +197,77 @@ VE_Shader *VE_Render_CreateShader(const char *pVertexPath, const char *pFragment
     free(pFragmentSource);
 
     VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-    framebufferInfo.renderPass = pShader->renderPass;
+    framebufferInfo.renderPass = pProgram->renderPass;
     framebufferInfo.attachmentCount = 1;
     framebufferInfo.width = VE_G_SwapchainExtent.width;
     framebufferInfo.height = VE_G_SwapchainExtent.height;
     framebufferInfo.layers = 1;
 
-    pShader->pFramebuffers = malloc(sizeof(VkFramebuffer) * VE_G_SwapchainImageCount);
+    pProgram->pFramebuffers = malloc(sizeof(VkFramebuffer) * VE_G_SwapchainImageCount);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
         framebufferInfo.pAttachments = &VE_G_pSwapchainImageViews[i];
-        vkCreateFramebuffer(VE_G_Device, &framebufferInfo, NULL, &pShader->pFramebuffers[i]);
+        vkCreateFramebuffer(VE_G_Device, &framebufferInfo, NULL, &pProgram->pFramebuffers[i]);
     }
 
-    return pShader;
+    pProgram->pVertexPath = pVertexPath;
+    pProgram->pFragmentPath = pFragmentPath;
 }
 
-void VE_Render_DestroyShader(VE_Shader *pShader) {
+VE_ProgramT *VE_Render_CreateProgram(const char *pVertexPath, const char *pFragmentPath) {
+    VE_G_ppPrograms[VE_G_ProgramCount] = malloc(sizeof(VE_ProgramT));
+    VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[VE_G_ProgramCount], pVertexPath, pFragmentPath);
+    return VE_G_ppPrograms[VE_G_ProgramCount++];
+}
+
+void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
+    uint32_t programIndex = UINT32_MAX;
+    for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
+        if (VE_G_ppPrograms[i] == pProgram) {
+            programIndex = i;
+            break;
+        }
+    }
+    if (programIndex == UINT32_MAX) return;
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i)
-        vkDestroyFramebuffer(VE_G_Device, pShader->pFramebuffers[i], NULL);
-    free(pShader->pFramebuffers);
-    vkDestroyPipeline(VE_G_Device, pShader->pipeline, NULL);
-    vkDestroyPipelineLayout(VE_G_Device, pShader->layout, NULL);
-    vkDestroyRenderPass(VE_G_Device, pShader->renderPass, NULL);
+        vkDestroyFramebuffer(VE_G_Device, pProgram->pFramebuffers[i], NULL);
+    free(pProgram->pFramebuffers);
+    vkDestroyPipeline(VE_G_Device, pProgram->pipeline, NULL);
+    vkDestroyPipelineLayout(VE_G_Device, pProgram->layout, NULL);
+    vkDestroyRenderPass(VE_G_Device, pProgram->renderPass, NULL);
+
+    free(pProgram);
+
+    if (--VE_G_ProgramCount) {
+        VE_G_ppPrograms[programIndex] = VE_G_ppPrograms[VE_G_ProgramCount];
+        VE_G_ppPrograms[VE_G_ProgramCount] = NULL;
+    } else {
+        VE_G_ppPrograms[programIndex] = NULL;
+    }
 }
 
-void VE_Render_DestroyShaders(VE_Shader **ppShaders, uint32_t count) {
-    for (uint32_t i = 0; i < count; ++i)
-        VE_Render_DestroyShader(ppShaders[i]);
+void VE_Render_DestroyAllPrograms(char freeMemory) {
+    for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
+        for (uint32_t j = 0; j < VE_G_SwapchainImageCount; ++j)
+            vkDestroyFramebuffer(VE_G_Device, VE_G_ppPrograms[i]->pFramebuffers[j], NULL);
+        free(VE_G_ppPrograms[i]->pFramebuffers);
+        vkDestroyPipeline(VE_G_Device, VE_G_ppPrograms[i]->pipeline, NULL);
+        vkDestroyPipelineLayout(VE_G_Device, VE_G_ppPrograms[i]->layout, NULL);
+        vkDestroyRenderPass(VE_G_Device, VE_G_ppPrograms[i]->renderPass, NULL);
+        if (freeMemory) free(VE_G_ppPrograms[i]);
+    }
+    VE_G_ProgramCount = 0;
+}
+
+void VE_Render_RecreateAllPrograms() {
+    uint32_t programCount = VE_G_ProgramCount;
+    const char *shaderPaths[VE_RENDER_MAX_PROGRAMS][2];
+    for (uint32_t i = 0; i < programCount; ++i) {
+        shaderPaths[i][0] = VE_G_ppPrograms[i]->pVertexPath;
+        shaderPaths[i][1] = VE_G_ppPrograms[i]->pFragmentPath;
+    }
+    VE_Render_DestroyAllPrograms(0);
+    for (uint32_t i = 0; i < programCount; ++i) {
+        VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[i], shaderPaths[i][0], shaderPaths[i][1]);
+    }
+    VE_G_ProgramCount = programCount;
 }

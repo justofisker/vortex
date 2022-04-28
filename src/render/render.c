@@ -26,10 +26,12 @@ void VE_Render_Init(SDL_Window *window) {
 }
 
 void VE_Render_Destroy() {
-    vkDestroySemaphore(VE_G_Device, VE_G_ImageAvailableSemaphore, NULL);
-    vkDestroySemaphore(VE_G_Device, VE_G_RenderFinishedSemaphore, NULL);
-    vkDestroyFence(VE_G_Device, VE_G_InFlightFence, NULL);
-    free(VE_G_pCommandBuffers);
+    VE_Render_DestroyAllPrograms(1);
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        vkDestroySemaphore(VE_G_Device, VE_G_pImageAvailableSemaphores[i], NULL);
+        vkDestroySemaphore(VE_G_Device, VE_G_pRenderFinishedSemaphores[i], NULL);
+        vkDestroyFence(VE_G_Device, VE_G_pInFlightFences[i], NULL);
+    }
     vkDestroyCommandPool(VE_G_Device, VE_G_CommandPool, NULL);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
         vkDestroyImageView(VE_G_Device, VE_G_pSwapchainImageViews[i], NULL);
@@ -46,31 +48,46 @@ void VE_Render_Destroy() {
 	vkDestroyInstance(VE_G_Instance, NULL);
 }
 
-static int32_t imageIndex = 0;
+void VE_Render_Resize() {
+    vkDeviceWaitIdle(VE_G_Device);
+
+    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
+        vkDestroyImageView(VE_G_Device, VE_G_pSwapchainImageViews[i], NULL);
+    }
+    free(VE_G_pSwapchainImageViews);
+    if (VE_G_pSwapchainImages)
+        free(VE_G_pSwapchainImages);
+    vkDestroySwapchainKHR(VE_G_Device, VE_G_Swapchain, NULL);
+    VE_Render_CreateSwapchain();
+    VE_Render_RecreateAllPrograms();
+}
+
+static uint32_t imageIndex = 0;
+static uint32_t currentFrame = 0;
 
 void VE_Render_BeginFrame() {
-    vkAcquireNextImageKHR(VE_G_Device, VE_G_Swapchain, UINT64_MAX, VE_G_ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    vkAcquireNextImageKHR(VE_G_Device, VE_G_Swapchain, UINT64_MAX, VE_G_pImageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 }
 
 void VE_Render_EndFrame() {
-    vkWaitForFences(VE_G_Device, 1, &VE_G_InFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(VE_G_Device, 1, &VE_G_InFlightFence);
+    vkWaitForFences(VE_G_Device, 1, &VE_G_pInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(VE_G_Device, 1, &VE_G_pInFlightFences[currentFrame]);
 
     VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 
-    VkSemaphore waitSemaphores[] = { VE_G_ImageAvailableSemaphore };
+    VkSemaphore waitSemaphores[] = { VE_G_pImageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &VE_G_pCommandBuffers[imageIndex];
+    submitInfo.pCommandBuffers = &VE_G_pCommandBuffers[currentFrame];
 
-    VkSemaphore signalSemaphores[] = { VE_G_RenderFinishedSemaphore };
+    VkSemaphore signalSemaphores[] = { VE_G_pRenderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkQueueSubmit(VE_G_GraphicsQueue, 1, &submitInfo, VE_G_InFlightFence);
+    vkQueueSubmit(VE_G_GraphicsQueue, 1, &submitInfo, VE_G_pInFlightFences[currentFrame]);
 
     VkPresentInfoKHR presentInfo = { 0 };
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -86,27 +103,29 @@ void VE_Render_EndFrame() {
     vkQueuePresentKHR(VE_G_PresentQueue, &presentInfo);
 
     vkDeviceWaitIdle(VE_G_Device);
+
+    currentFrame = (currentFrame + 1) % VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 }
 
-void VE_Render_Draw(VE_Shader *pShader) {
+void VE_Render_Draw(VE_ProgramT *pProgram) {
     VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = NULL;
 
-    vkBeginCommandBuffer(VE_G_pCommandBuffers[imageIndex], &beginInfo);
+    vkBeginCommandBuffer(VE_G_pCommandBuffers[currentFrame], &beginInfo);
 
     VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-    renderPassInfo.renderPass = pShader->renderPass;
-    renderPassInfo.framebuffer = pShader->pFramebuffers[imageIndex];
+    renderPassInfo.renderPass = pProgram->renderPass;
+    renderPassInfo.framebuffer = pProgram->pFramebuffers[imageIndex];
     renderPassInfo.renderArea.offset = (VkOffset2D){0, 0};
     renderPassInfo.renderArea.extent = VE_G_SwapchainExtent;
     VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
-    vkCmdBeginRenderPass(VE_G_pCommandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(VE_G_pCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pShader->pipeline);
-    vkCmdDraw(VE_G_pCommandBuffers[imageIndex], 3, 1, 0, 0);
-    vkCmdEndRenderPass(VE_G_pCommandBuffers[imageIndex]);
+    vkCmdBeginRenderPass(VE_G_pCommandBuffers[currentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(VE_G_pCommandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pProgram->pipeline);
+    vkCmdDraw(VE_G_pCommandBuffers[currentFrame], 3, 1, 0, 0);
+    vkCmdEndRenderPass(VE_G_pCommandBuffers[currentFrame]);
 
-    vkEndCommandBuffer(VE_G_pCommandBuffers[imageIndex]);
+    vkEndCommandBuffer(VE_G_pCommandBuffers[currentFrame]);
 }

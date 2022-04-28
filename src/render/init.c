@@ -299,9 +299,8 @@ void VE_Render_CreateCommandPool() {
     VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
     allocInfo.commandPool = VE_G_CommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = VE_G_SwapchainImageCount;
+    allocInfo.commandBufferCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 
-    VE_G_pCommandBuffers = malloc(sizeof(VkCommandBuffer) * VE_G_SwapchainImageCount);
     vkAllocateCommandBuffers(VE_G_Device, &allocInfo, VE_G_pCommandBuffers);
 }
 
@@ -310,7 +309,9 @@ void VE_Render_CreateSyncObjects() {
     VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    vkCreateSemaphore(VE_G_Device, &semaphoreInfo, NULL, &VE_G_ImageAvailableSemaphore);
-    vkCreateSemaphore(VE_G_Device, &semaphoreInfo, NULL, &VE_G_RenderFinishedSemaphore);
-    vkCreateFence(VE_G_Device, &fenceInfo, NULL, &VE_G_InFlightFence);
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        vkCreateSemaphore(VE_G_Device, &semaphoreInfo, NULL, &VE_G_pImageAvailableSemaphores[i]);
+        vkCreateSemaphore(VE_G_Device, &semaphoreInfo, NULL, &VE_G_pRenderFinishedSemaphores[i]);
+        vkCreateFence(VE_G_Device, &fenceInfo, NULL, &VE_G_pInFlightFences[i]);
+    }
 }
