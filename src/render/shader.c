@@ -264,14 +264,9 @@ void VE_Render_DestroyAllPrograms(char freeMemory) {
 
 void VE_Render_RecreateAllPrograms() {
     uint32_t programCount = VE_G_ProgramCount;
-    const char *shaderPaths[VE_RENDER_MAX_PROGRAMS][2];
-    for (uint32_t i = 0; i < programCount; ++i) {
-        shaderPaths[i][0] = VE_G_ppPrograms[i]->pVertexPath;
-        shaderPaths[i][1] = VE_G_ppPrograms[i]->pFragmentPath;
-    }
     VE_Render_DestroyAllPrograms(0);
     for (uint32_t i = 0; i < programCount; ++i) {
-        VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[i], shaderPaths[i][0], shaderPaths[i][1]);
+        VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[i], VE_G_ppPrograms[i]->pVertexPath, VE_G_ppPrograms[i]->pFragmentPath);
     }
     VE_G_ProgramCount = programCount;
 }

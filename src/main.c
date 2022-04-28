@@ -9,20 +9,30 @@ int main(int argc, char *argv[]) {
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
 
     char running = 1;
+    char minimized = 0;
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            switch(event.type) {
+            switch (event.type) {
                 case SDL_QUIT:
                     running = 0;
                     break;
                 case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        VE_Render_Resize();
+                    switch (event.window.event) {
+                        case SDL_WINDOWEVENT_RESIZED:
+                            VE_Render_Resize();
+                            break;
+                        case SDL_WINDOWEVENT_MINIMIZED:
+                            minimized = 1;
+                            break;
+                        case SDL_WINDOWEVENT_RESTORED:
+                            minimized = 0;
+                            break;
                     }
                     break;
             }
         }
+        if (minimized) continue;
         VE_Render_BeginFrame();
         VE_Render_Draw(pTriangleProgram);
         VE_Render_EndFrame();
