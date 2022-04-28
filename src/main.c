@@ -4,6 +4,8 @@
 #include "render/shader.h"
 
 int main(int argc, char *argv[]) {
+    SDL_Init(SDL_INIT_VIDEO);
+
     SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
