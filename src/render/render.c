@@ -7,9 +7,9 @@
 #include "shader.h"
 
 void VE_Render_Init(SDL_Window *window) {
-	VE_G_Window = window;
-	volkInitialize();
-	VE_Render_CreateInstance();
+    VE_G_Window = window;
+    volkInitialize();
+    VE_Render_CreateInstance();
 #ifndef NDEBUG
     if (VE_Render_CheckValidationSupport()) {
         VE_Render_RegisterDebugReportCallback();
@@ -23,6 +23,12 @@ void VE_Render_Init(SDL_Window *window) {
     VE_Render_CreateSwapchain();
     VE_Render_CreateCommandPool();
     VE_Render_CreateSyncObjects();
+
+    VkPhysicalDeviceProperties physicalDeviceProperties;
+    vkGetPhysicalDeviceProperties(VE_G_PhysicalDevice, &physicalDeviceProperties);
+    printf("%s (Vulkan %d.%d.%d)\n", physicalDeviceProperties.deviceName, VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion),
+           VK_VERSION_MINOR(physicalDeviceProperties.apiVersion),
+           VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
 }
 
 void VE_Render_Destroy() {

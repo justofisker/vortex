@@ -91,8 +91,17 @@ void VE_Render_PickPhysicalDeviceAndQueues() {
     vkEnumeratePhysicalDevices(VE_G_Instance, &count, NULL);
     VkPhysicalDevice *devices = malloc(sizeof(VkPhysicalDevice) * count);
     vkEnumeratePhysicalDevices(VE_G_Instance, &count, devices);
+    uint32_t deviceScore = UINT32_MAX;
     for (uint32_t i = 0; i < count; ++i) {
         // TODO: Implement physical device picking logic
+
+        uint32_t currentDeviceScore = 0;
+
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+        vkGetPhysicalDeviceProperties(devices[i], &physicalDeviceProperties);
+
+        if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+            currentDeviceScore += 100;
 
         // Require device to have a graphics capable queue
         uint32_t queueGraphicsIndex = UINT32_MAX, queuePresentIndex = UINT32_MAX;
@@ -105,7 +114,7 @@ void VE_Render_PickPhysicalDeviceAndQueues() {
                 queueGraphicsIndex = j;
 
             VkBool32 presentSupport;
-            vkGetPhysicalDeviceSurfaceSupportKHR(devices[i], i, VE_G_Surface, &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(devices[i], j, VE_G_Surface, &presentSupport);
             if (presentSupport)
                 queuePresentIndex = j;
 
@@ -141,9 +150,12 @@ void VE_Render_PickPhysicalDeviceAndQueues() {
         }
         free(pAvailableExtensions);
 
-        VE_G_PhysicalDevice = devices[i];
-        VE_G_GraphicsQueueIndex = queueGraphicsIndex;
-        VE_G_PresentQueueIndex = queuePresentIndex;
+        if (currentDeviceScore > deviceScore || deviceScore == UINT32_MAX) {
+            VE_G_PhysicalDevice = devices[i];
+            VE_G_GraphicsQueueIndex = queueGraphicsIndex;
+            VE_G_PresentQueueIndex = queuePresentIndex;
+            deviceScore = currentDeviceScore;
+        }
     }
     if (!VE_G_PhysicalDevice) {
         fprintf(stderr, "Failed to find suitable graphics card!\n");
