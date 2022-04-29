@@ -27,6 +27,10 @@ target_link_libraries(vortex PRIVATE
         cglm
         )
 
+if (UNIX)
+    target_link_libraries(vortex PUBLIC m)
+endif (UNIX)
+
 if (WIN32)
     set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 elseif (APPLE)

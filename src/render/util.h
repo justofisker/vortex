@@ -3,6 +3,9 @@
 
 #include "types.h"
 
+#define min(x, y) (((x) > (y)) ? (x) : (y))
+#define max(x, y) (((x) < (y)) ? (x) : (y))
+
 char *VE_Util_ReadFile(const char *path, uint32_t *size);
 void VE_Render_CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer *pBuffer, VkDeviceMemory *pBufferMemory);
 void VE_Render_CopyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size);
