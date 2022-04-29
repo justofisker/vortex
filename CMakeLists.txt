@@ -11,6 +11,8 @@ add_executable(vortex
         "src/render/globals.h"
         "src/render/shader.c"
         "src/render/shader.h"
+        "src/render/util.c"
+        "src/render/util.h"
         )
 
 target_include_directories(vortex PRIVATE

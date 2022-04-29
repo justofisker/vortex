@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
         }
         if (minimized) continue;
         VE_Render_BeginFrame();
+        VE_Render_UpdateUniformBuffer(pTriangleProgram);
         VE_Render_Draw(pTriangleProgram, pVertexBuffer, pIndexBuffer);
         VE_Render_EndFrame();
     }
@@ -58,6 +59,5 @@ int main(int argc, char *argv[]) {
     VE_Render_DestroyBuffer(pIndexBuffer);
     VE_Render_DestroyProgram(pTriangleProgram);
     VE_Render_Destroy();
-    SDL_DestroyWindow(window);
     return 0;
 }

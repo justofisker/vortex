@@ -3,9 +3,6 @@
 
 #include "types.h"
 
-#define VE_RENDER_MAX_FRAMES_IN_FLIGHT 2
-#define VE_RENDER_MAX_PROGRAMS 128
-
 extern SDL_Window *VE_G_Window;
 extern VkInstance VE_G_Instance;
 extern VkPhysicalDevice VE_G_PhysicalDevice;
@@ -29,6 +26,7 @@ extern VkSemaphore VE_G_pRenderFinishedSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT
 extern VkFence VE_G_pInFlightFences[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
 extern VE_ProgramT *VE_G_ppPrograms[VE_RENDER_MAX_PROGRAMS];
 extern uint32_t VE_G_ProgramCount;
+extern uint32_t VE_G_CurrentFrame;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG

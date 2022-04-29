@@ -1,31 +1,10 @@
 #include "shader.h"
-
 #include <volk.h>
 #include <SDL.h>
-
 #include "globals.h"
-
 #include <stdio.h>
-
-static char *VE_Util_ReadFile(const char *path, uint32_t *size) {
-    FILE* file;
-    file = fopen(path, "rb");
-    if(!file)
-    {
-        printf("Failed to open %s", path);
-        return NULL;
-    }
-    fseek(file, 0, SEEK_END);
-    long fsize = ftell(file);
-    if(size)
-        *size = (int)fsize;
-    fseek(file, 0, SEEK_SET);
-    char* content = malloc(fsize + 1);
-    fread(content, 1, fsize, file);
-    fclose(file);
-    content[fsize] = 0;
-    return content;
-}
+#include <cglm/cglm.h>
+#include "util.h"
 
 VkShaderModule VE_Render_CreateShaderModule(uint32_t* pData, uint32_t size) {
     VkShaderModuleCreateInfo createInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
@@ -39,6 +18,68 @@ VkShaderModule VE_Render_CreateShaderModule(uint32_t* pData, uint32_t size) {
 }
 
 static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char *pVertexPath, const char *pFragmentPath) {
+    VkDeviceSize bufferSize = sizeof(VE_UniformBufferObjectT);
+    for (size_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; i++) {
+        VE_Render_CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                               &pProgram->pUniformBuffer[i], &pProgram->pUniformBufferMemory[i]);
+    }
+
+    VkDescriptorSetLayoutBinding uboLayoutBinding = { 0 };
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.pImmutableSamplers = NULL;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboLayoutBinding;
+
+    vkCreateDescriptorSetLayout(VE_G_Device, &layoutInfo, NULL, &pProgram->descriptorSetLayout);
+
+    VkDescriptorPoolSize poolSize = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER };
+    poolSize.descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+    descriptorPoolCreateInfo.poolSizeCount = 1;
+    descriptorPoolCreateInfo.pPoolSizes = &poolSize;
+    descriptorPoolCreateInfo.maxSets = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+
+    vkCreateDescriptorPool(VE_G_Device, &descriptorPoolCreateInfo, NULL, &pProgram->descriptorPool);
+
+    VkDescriptorSetLayout pDescriptorSetLayouts[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i)
+        pDescriptorSetLayouts[i] = pProgram->descriptorSetLayout;
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptorSetAllocateInfo.descriptorPool = pProgram->descriptorPool;
+    descriptorSetAllocateInfo.descriptorSetCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+    descriptorSetAllocateInfo.pSetLayouts = pDescriptorSetLayouts;
+
+    vkAllocateDescriptorSets(VE_G_Device, &descriptorSetAllocateInfo, pProgram->pDescriptorSets);
+
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        VkDescriptorBufferInfo bufferInfo = { 0 };
+        bufferInfo.buffer = pProgram->pUniformBuffer[i];
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(VE_UniformBufferObjectT);
+
+        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = pProgram->pDescriptorSets[i];
+        descriptorWrite.dstBinding = 0;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pImageInfo = NULL;
+        descriptorWrite.pTexelBufferView = NULL;
+
+        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
+    }
+
     uint32_t vertexSourceSize;
     uint32_t *pVertexSource =  (uint32_t*) VE_Util_ReadFile(pVertexPath, &vertexSourceSize);
     uint32_t fragmentSourceSize;
@@ -107,7 +148,7 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f;
     rasterizer.depthBiasClamp = 0.0f;
@@ -143,8 +184,8 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = NULL;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &pProgram->descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = NULL;
 
@@ -234,9 +275,23 @@ VE_ProgramT *VE_Render_CreateProgram(const char *pVertexPath, const char *pFragm
     return VE_G_ppPrograms[VE_G_ProgramCount++];
 }
 
-void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
-    vkDeviceWaitIdle(VE_G_Device);
+static void VE_Render_DestroyProgramAtLocation(VE_ProgramT *pProgram) {
+    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i)
+        vkDestroyFramebuffer(VE_G_Device, pProgram->pFramebuffers[i], NULL);
+    free(pProgram->pFramebuffers);
+    vkDestroyPipeline(VE_G_Device, pProgram->pipeline, NULL);
+    vkDestroyPipelineLayout(VE_G_Device, pProgram->layout, NULL);
+    vkDestroyRenderPass(VE_G_Device, pProgram->renderPass, NULL);
+    vkDestroyDescriptorSetLayout(VE_G_Device, pProgram->descriptorSetLayout, NULL);
+    vkDestroyDescriptorPool(VE_G_Device, pProgram->descriptorPool, NULL);
 
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        vkDestroyBuffer(VE_G_Device, pProgram->pUniformBuffer[i], NULL);
+        vkFreeMemory(VE_G_Device, pProgram->pUniformBufferMemory[i], NULL);
+    }
+}
+
+void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
     uint32_t programIndex = UINT32_MAX;
     for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
         if (VE_G_ppPrograms[i] == pProgram) {
@@ -245,20 +300,15 @@ void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
         }
     }
     if (programIndex == UINT32_MAX) return;
-    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i)
-        vkDestroyFramebuffer(VE_G_Device, pProgram->pFramebuffers[i], NULL);
-    free(pProgram->pFramebuffers);
-    vkDestroyPipeline(VE_G_Device, pProgram->pipeline, NULL);
-    vkDestroyPipelineLayout(VE_G_Device, pProgram->layout, NULL);
-    vkDestroyRenderPass(VE_G_Device, pProgram->renderPass, NULL);
+
+    vkDeviceWaitIdle(VE_G_Device);
+
+    VE_Render_DestroyProgramAtLocation(pProgram);
 
     free(pProgram);
 
     if (--VE_G_ProgramCount) {
         VE_G_ppPrograms[programIndex] = VE_G_ppPrograms[VE_G_ProgramCount];
-        VE_G_ppPrograms[VE_G_ProgramCount] = NULL;
-    } else {
-        VE_G_ppPrograms[programIndex] = NULL;
     }
 }
 
@@ -266,12 +316,7 @@ void VE_Render_DestroyAllPrograms(char freeMemory) {
     vkDeviceWaitIdle(VE_G_Device);
 
     for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
-        for (uint32_t j = 0; j < VE_G_SwapchainImageCount; ++j)
-            vkDestroyFramebuffer(VE_G_Device, VE_G_ppPrograms[i]->pFramebuffers[j], NULL);
-        free(VE_G_ppPrograms[i]->pFramebuffers);
-        vkDestroyPipeline(VE_G_Device, VE_G_ppPrograms[i]->pipeline, NULL);
-        vkDestroyPipelineLayout(VE_G_Device, VE_G_ppPrograms[i]->layout, NULL);
-        vkDestroyRenderPass(VE_G_Device, VE_G_ppPrograms[i]->renderPass, NULL);
+        VE_Render_DestroyProgramAtLocation((VE_G_ppPrograms[i]));
         if (freeMemory) free(VE_G_ppPrograms[i]);
     }
     VE_G_ProgramCount = 0;
@@ -284,4 +329,20 @@ void VE_Render_RecreateAllPrograms() {
         VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[i], VE_G_ppPrograms[i]->pVertexPath, VE_G_ppPrograms[i]->pFragmentPath);
     }
     VE_G_ProgramCount = programCount;
+}
+
+void VE_Render_UpdateUniformBuffer(VE_ProgramT *pProgram) {
+    float time = SDL_GetTicks() / 1000.f;
+
+    VE_UniformBufferObjectT ubo = { 0 };
+    glm_mat4_identity(ubo.model);
+    glm_rotate(ubo.model, time * GLM_PI_2f, (vec3){0.f, 0.f, 1.f});
+    glm_lookat((vec3){2.f, 2.f, 2.f}, (vec3){0.f, 0.f, 0.f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
+    glm_perspective(glm_rad(60.f), VE_G_SwapchainExtent.width / (float)VE_G_SwapchainExtent.height, 0.1f, 10.f, ubo.projection);
+    ubo.projection[1][1] *= -1;
+
+    void* data;
+    vkMapMemory(VE_G_Device, pProgram->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(VE_G_Device, pProgram->pUniformBufferMemory[VE_G_CurrentFrame]);
 }

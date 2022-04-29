@@ -23,6 +23,7 @@ VkSemaphore VE_G_pRenderFinishedSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT] = {VK
 VkFence VE_G_pInFlightFences[VE_RENDER_MAX_FRAMES_IN_FLIGHT] = {VK_NULL_HANDLE };
 VE_ProgramT *VE_G_ppPrograms[VE_RENDER_MAX_PROGRAMS] = { NULL };
 uint32_t VE_G_ProgramCount = 0;
+uint32_t VE_G_CurrentFrame = 0;
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG
