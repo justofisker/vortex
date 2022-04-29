@@ -4,3 +4,6 @@
 [submodule "extern/volk"]
 	path = extern/volk
 	url = https://github.com/zeux/volk
+[submodule "extern/cglm"]
+	path = extern/cglm
+	url = https://github.com/recp/cglm

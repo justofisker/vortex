@@ -40,6 +40,7 @@ void VE_Render_Destroy() {
         vkDestroySemaphore(VE_G_Device, VE_G_pRenderFinishedSemaphores[i], NULL);
         vkDestroyFence(VE_G_Device, VE_G_pInFlightFences[i], NULL);
     }
+    vkDestroyCommandPool(VE_G_Device, VE_G_TransferCommandPool, NULL);
     vkDestroyCommandPool(VE_G_Device, VE_G_CommandPool, NULL);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
         vkDestroyImageView(VE_G_Device, VE_G_pSwapchainImageViews[i], NULL);
@@ -119,7 +120,7 @@ void VE_Render_EndFrame() {
     currentFrame = (currentFrame + 1) % VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 }
 
-void VE_Render_Draw(VE_ProgramT *pProgram) {
+void VE_Render_Draw(VE_ProgramT *pProgram, VE_BufferT *pVertexBuffer, VE_BufferT *pIndexBuffer) {
     VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = NULL;
@@ -136,8 +137,136 @@ void VE_Render_Draw(VE_ProgramT *pProgram) {
     renderPassInfo.pClearValues = &clearColor;
     vkCmdBeginRenderPass(VE_G_pCommandBuffers[currentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(VE_G_pCommandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pProgram->pipeline);
-    vkCmdDraw(VE_G_pCommandBuffers[currentFrame], 3, 1, 0, 0);
+
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(VE_G_pCommandBuffers[currentFrame], 0, 1, &pVertexBuffer->buffer, offsets);
+    vkCmdBindIndexBuffer(VE_G_pCommandBuffers[currentFrame], pIndexBuffer->buffer, 0, VK_INDEX_TYPE_UINT16);
+
+    vkCmdDrawIndexed(VE_G_pCommandBuffers[currentFrame], pIndexBuffer->instanceCount, 1, 0, 0, 0);
     vkCmdEndRenderPass(VE_G_pCommandBuffers[currentFrame]);
 
     vkEndCommandBuffer(VE_G_pCommandBuffers[currentFrame]);
+}
+
+static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(VE_G_PhysicalDevice, &memProperties);
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+    perror("failed to find memory type :(.");
+    exit(-1);
+}
+
+static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer *pBuffer, VkDeviceMemory *pBufferMemory) {
+    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    vkCreateBuffer(VE_G_Device, &bufferInfo, NULL, pBuffer);
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(VE_G_Device, *pBuffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    vkAllocateMemory(VE_G_Device, &allocInfo, NULL, pBufferMemory);
+
+    vkBindBufferMemory(VE_G_Device, *pBuffer, *pBufferMemory, 0);
+}
+
+static void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size) {
+    VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = VE_G_TransferCommandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(VE_G_Device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferCopy copyRegion = { 0 };
+    copyRegion.srcOffset = 0; // Optional
+    copyRegion.dstOffset = 0; // Optional
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
+
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(VE_G_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(VE_G_GraphicsQueue);
+
+    vkFreeCommandBuffers(VE_G_Device, VE_G_TransferCommandPool, 1, &commandBuffer);
+}
+
+VE_BufferT *VE_Render_CreateVertexBuffer(VE_VertexT *vertices, uint32_t count) {
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * count;
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(VE_G_Device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, vertices, (size_t) bufferSize);
+    vkUnmapMemory(VE_G_Device, stagingBufferMemory);
+
+    VE_BufferT *pVertexBuffer = malloc(sizeof(VE_BufferT));
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pVertexBuffer->buffer, &pVertexBuffer->deviceMemory);
+
+    copyBuffer(pVertexBuffer->buffer, stagingBuffer, bufferSize);
+
+    vkDestroyBuffer(VE_G_Device, stagingBuffer, NULL);
+    vkFreeMemory(VE_G_Device, stagingBufferMemory, NULL);
+
+    pVertexBuffer->instanceCount = count;
+
+    return pVertexBuffer;
+}
+
+VE_BufferT *VE_Render_CreateIndexBuffer(uint16_t *indices, uint32_t count) {
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    VkDeviceSize bufferSize = sizeof(indices[0]) * count;
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(VE_G_Device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, indices, (size_t) bufferSize);
+    vkUnmapMemory(VE_G_Device, stagingBufferMemory);
+
+    VE_BufferT *pIndexBuffer = malloc(sizeof(VE_BufferT));
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pIndexBuffer->buffer, &pIndexBuffer->deviceMemory);
+
+    copyBuffer(pIndexBuffer->buffer, stagingBuffer, bufferSize);
+
+    vkDestroyBuffer(VE_G_Device, stagingBuffer, NULL);
+    vkFreeMemory(VE_G_Device, stagingBufferMemory, NULL);
+
+    pIndexBuffer->instanceCount = count;
+
+    return pIndexBuffer;
+}
+
+void VE_Render_DestroyBuffer(VE_BufferT *pBuffer) {
+    vkDeviceWaitIdle(VE_G_Device);
+
+    vkDestroyBuffer(VE_G_Device, pBuffer->buffer, NULL);
+    vkFreeMemory(VE_G_Device, pBuffer->deviceMemory, NULL);
+
+    free(pBuffer);
 }

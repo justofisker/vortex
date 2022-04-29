@@ -303,10 +303,13 @@ void VE_Render_CreateSwapchain() {
 
 void VE_Render_CreateCommandPool() {
     VkCommandPoolCreateInfo poolInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT ;
     poolInfo.queueFamilyIndex = VE_G_GraphicsQueueIndex;
 
     vkCreateCommandPool(VE_G_Device, &poolInfo, NULL, &VE_G_CommandPool);
+
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT ;
+    vkCreateCommandPool(VE_G_Device, &poolInfo, NULL, &VE_G_TransferCommandPool);
 
     VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
     allocInfo.commandPool = VE_G_CommandPool;

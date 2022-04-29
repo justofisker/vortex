@@ -10,6 +10,20 @@ int main(int argc, char *argv[]) {
     VE_Render_Init(window);
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
 
+    VE_VertexT vertices[] = {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    uint16_t indices[] = {
+            0, 1, 2, 2, 3, 0
+    };
+
+    VE_BufferT *pVertexBuffer = VE_Render_CreateVertexBuffer(vertices, sizeof(vertices) / sizeof(vertices[0]));
+    VE_BufferT *pIndexBuffer = VE_Render_CreateIndexBuffer(indices, sizeof(indices) / sizeof(indices[0]));
+
     char running = 1;
     char minimized = 0;
     while (running) {
@@ -36,10 +50,12 @@ int main(int argc, char *argv[]) {
         }
         if (minimized) continue;
         VE_Render_BeginFrame();
-        VE_Render_Draw(pTriangleProgram);
+        VE_Render_Draw(pTriangleProgram, pVertexBuffer, pIndexBuffer);
         VE_Render_EndFrame();
     }
 
+    VE_Render_DestroyBuffer(pVertexBuffer);
+    VE_Render_DestroyBuffer(pIndexBuffer);
     VE_Render_DestroyProgram(pTriangleProgram);
     VE_Render_Destroy();
     SDL_DestroyWindow(window);

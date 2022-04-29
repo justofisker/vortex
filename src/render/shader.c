@@ -58,11 +58,26 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
 
     VkPipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageInfo, fragmentShaderStageInfo };
 
+    VkVertexInputBindingDescription bindingDescription = { 0 };
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(VE_VertexT);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription pAttributeDescriptions[2] = { 0 };
+    pAttributeDescriptions[0].binding = 0;
+    pAttributeDescriptions[0].location = 0;
+    pAttributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    pAttributeDescriptions[0].offset = offsetof(VE_VertexT, pos);
+    pAttributeDescriptions[1].binding = 0;
+    pAttributeDescriptions[1].location = 1;
+    pAttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    pAttributeDescriptions[1].offset = offsetof(VE_VertexT, color);
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = NULL;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = NULL;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = 2;
+    vertexInputInfo.pVertexAttributeDescriptions = pAttributeDescriptions;
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;

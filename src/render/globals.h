@@ -1,10 +1,7 @@
 #ifndef RENDER_GLOBALS_H
 #define RENDER_GLOBALS_H
 
-#define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
-typedef struct SDL_Window SDL_Window;
-typedef struct VE_ProgramT VE_ProgramT;
+#include "types.h"
 
 #define VE_RENDER_MAX_FRAMES_IN_FLIGHT 2
 #define VE_RENDER_MAX_PROGRAMS 128
@@ -25,6 +22,7 @@ extern uint32_t VE_G_SwapchainImageCount;
 extern VkImage *VE_G_pSwapchainImages;
 extern VkImageView *VE_G_pSwapchainImageViews;
 extern VkCommandPool VE_G_CommandPool;
+extern VkCommandPool VE_G_TransferCommandPool;
 extern VkCommandBuffer VE_G_pCommandBuffers[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
 extern VkSemaphore VE_G_pImageAvailableSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
 extern VkSemaphore VE_G_pRenderFinishedSemaphores[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
