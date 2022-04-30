@@ -1,6 +1,29 @@
 cmake_minimum_required(VERSION 3.22)
 project(vortex)
 
+set(SHADER_DIR "shaders")
+file(GLOB SHADERS ${SHADER_DIR}/*.glsl)
+
+find_package(Vulkan QUIET)
+
+if (TARGET Vulkan::Vulkan)
+    set(SHADER_COMPILER Vulkan::glslangValidator)
+elseif (DEFINED ENV{VULKAN_SDK})
+    set(SHADER_COMPILER "$ENV{VULKAN_SDK}/Bin/glslangValidator")
+endif ()
+set(SHADER_COMPILER "$ENV{VULKAN_SDK}/Bin/glslangValidator")
+
+set(SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+
+foreach(SHADER IN LISTS SHADERS)
+    get_filename_component(FILENAME ${SHADER} NAME_WLE)
+    add_custom_command(OUTPUT ${SHADER_OUTPUT_DIR}/${FILENAME}.spv
+            COMMAND ${SHADER_COMPILER} -V -o ${SHADER_OUTPUT_DIR}/${FILENAME}.spv ${SHADER}
+            DEPENDS ${SHADER}
+            COMMENT "Compiling ${FILENAME}.glsl")
+    list(APPEND SPV_SHADERS ${SHADER_OUTPUT_DIR}/${FILENAME}.spv)
+endForeach()
+
 add_executable(vortex
         "src/main.c"
         "src/render/render.c"
@@ -13,7 +36,10 @@ add_executable(vortex
         "src/render/shader.h"
         "src/render/util.c"
         "src/render/util.h"
+        ${SHADERS}
         )
+
+add_dependencies(vortex shaders)
 
 target_include_directories(vortex PRIVATE
         "extern/SDL2/include"
@@ -31,6 +57,9 @@ if (UNIX)
     target_link_libraries(vortex PUBLIC m)
 endif (UNIX)
 
+add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
+
+
 if (WIN32)
     set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 elseif (APPLE)
@@ -40,6 +69,7 @@ elseif (UNIX)
 endif ()
 add_subdirectory("extern/volk")
 
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 option(BUILD_SHARED_LIBS "" ON)
 add_subdirectory("extern/SDL2")
 
@@ -49,7 +79,6 @@ option(CGLM_USE_C99 "" OFF)
 option(CGLM_USE_TEST "Enable Tests" OFF)
 add_subdirectory("extern/cglm/")
 
-find_package(Vulkan QUIET)
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)
 elseif (DEFINED ENV{VULKAN_SDK})
