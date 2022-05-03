@@ -37,6 +37,19 @@ void VE_ECS_InsertComponent(VE_EntityT *pEntity, void *pComponent) {
 	pEntity->componentCount++;
 }
 
+void *VE_ECS_GetComponent(VE_EntityT *pEntity, uint32_t id) {
+	uint32_t offset = 0;
+	for (uint32_t i = 0; i < pEntity->componentCount; i++) {
+		void *pComponent = (char *)pEntity->pComponents + offset;
+		uint32_t c_id = *(uint32_t *)pComponent;
+		if (id == c_id) {
+			return pComponent;
+		}
+		offset += VE_G_ComponentSizes[c_id];
+	}
+	return NULL;
+}
+
 VE_EntityT *VE_ECS_GetEntity(VE_SceneT *pScene, uint32_t index) {
 	if (index >= pScene->entityCount) {
 		return NULL;
@@ -65,7 +78,10 @@ void VE_ECS_UpdateScene(VE_SceneT *pScene) {
 		for (uint32_t j = 0; j < entity->componentCount; j++) {
 			void *pComponent = (char *)entity->pComponents + offset;
 			uint32_t id = *(uint32_t *)pComponent;
-			VE_G_ComponentSystems[id](entity, pComponent);
+			ComponentSystem system = VE_G_ComponentSystems[id];
+			if (system) {
+				system(entity, pComponent);
+			}
 			offset += VE_G_ComponentSizes[id];
 		}
 	}

@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
     VE_EntityT *entity = VE_ECS_GetEntity(&scene, ent_handle);
     VE_TestComponent testComponent = VE_NewTestComponent(0);
     VE_ECS_InsertComponent(entity, &testComponent);
+    VE_Transform transform = VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f });
+    VE_ECS_InsertComponent(entity, &transform);
 
     char running = 1;
     char minimized = 0;
