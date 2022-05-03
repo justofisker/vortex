@@ -11,14 +11,13 @@ if (TARGET Vulkan::Vulkan)
 elseif (DEFINED ENV{VULKAN_SDK})
     set(SHADER_COMPILER "$ENV{VULKAN_SDK}/Bin/glslangValidator")
 endif ()
-set(SHADER_COMPILER "$ENV{VULKAN_SDK}/Bin/glslangValidator")
 
 set(SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 
 foreach(SHADER IN LISTS SHADERS)
     get_filename_component(FILENAME ${SHADER} NAME_WLE)
     add_custom_command(OUTPUT ${SHADER_OUTPUT_DIR}/${FILENAME}.spv
-            COMMAND ${SHADER_COMPILER} -V -o ${SHADER_OUTPUT_DIR}/${FILENAME}.spv ${SHADER}
+            COMMAND glslangValidator -V -o ${SHADER_OUTPUT_DIR}/${FILENAME}.spv ${SHADER}
             DEPENDS ${SHADER}
             COMMENT "Compiling ${FILENAME}.glsl")
     list(APPEND SPV_SHADERS ${SHADER_OUTPUT_DIR}/${FILENAME}.spv)
