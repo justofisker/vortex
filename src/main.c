@@ -30,11 +30,11 @@ int main(int argc, char *argv[]) {
 
     VE_SceneT scene = { NULL, 0 };
 
-    uint32_t ent_handle = VE_CreateEntity(&scene);
+    uint32_t ent_handle = VE_ECS_CreateEntity(&scene);
 
-    VE_EntityT *entity = VE_GetEntity(&scene, ent_handle);
+    VE_EntityT *entity = VE_ECS_GetEntity(&scene, ent_handle);
     VE_TestComponent testComponent = VE_NewTestComponent(0);
-    VE_InsertComponent(entity, &testComponent);
+    VE_ECS_InsertComponent(entity, &testComponent);
 
     char running = 1;
     char minimized = 0;
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
         }
         if (minimized) continue;
         // Tick
-        VE_UpdateScene(&scene);
+        VE_ECS_UpdateScene(&scene);
 
         // Render
         VE_Render_BeginFrame();

@@ -15,5 +15,5 @@ VE_TestComponent VE_NewTestComponent(int counter) {
 }
 
 void VE_SetupBuiltinComponents() {
-	VE_TestComponentID = VE_RegisterComponent(&VE_TestComponent_System, sizeof(VE_TestComponent));
+	VE_TestComponentID = VE_ECS_RegisterComponent(&VE_TestComponent_System, sizeof(VE_TestComponent));
 }

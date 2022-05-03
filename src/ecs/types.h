@@ -4,12 +4,12 @@
 #include <stdint.h>
 
 typedef struct VE_EntityT {
-	void* components;
+	void* pComponents;
 	uint32_t componentCount;
 } VE_EntityT;
 
 typedef struct VE_SceneT {
-	VE_EntityT *entities;
+	VE_EntityT *pEntities;
 	uint32_t entityCount;
 } VE_SceneT;
 
