@@ -2,20 +2,31 @@
 #include "globals.h"
 #include <stdlib.h>
 
-uint32_t VE_ECS_RegisterComponent(ComponentSystem componentSystem, uint32_t componentSize) {
+uint32_t VE_ECS_RegisterComponent(const char *pComponentName, uint32_t componentSize, ComponentUpdateSystem componentUpdateSystem, ComponentDestroySystem componentDestroySystem) {
 	if (VE_G_ComponentCount >= VE_ECS_COMPONENT_MAX) {
 		return VE_ECS_COMPONENT_MAX;
 	}
-	VE_G_ComponentSystems[VE_G_ComponentCount] = componentSystem;
+	VE_G_ComponentUpdateSystems[VE_G_ComponentCount] = componentUpdateSystem;
+	VE_G_ComponentDestroySystems[VE_G_ComponentCount] = componentDestroySystem;
 	VE_G_ComponentSizes[VE_G_ComponentCount] = componentSize;
+	VE_G_pComponentNames[VE_G_ComponentCount] = pComponentName;
 	return VE_G_ComponentCount++;
+}
+
+uint32_t VE_ECS_GetComponentIdFromName(const char *pComponentName) {
+	for (uint32_t i = 0; i < VE_G_ComponentCount; i++) {
+		if (strcmp(pComponentName, VE_G_pComponentNames[i]) == 0) {
+			return i;
+		}
+	}
+	return VE_ECS_COMPONENT_MAX;
 }
 
 uint32_t VE_ECS_GetEntitySize(VE_EntityT *pEntity) {
 	uint32_t size = 0;
 	for (uint32_t i = 0; i < pEntity->componentCount; i++) {
-		void *component = (char *)pEntity->pComponents + size;
-		uint32_t id = *(uint32_t *)component;
+		void *pComponent = (char *)pEntity->pComponents + size;
+		uint32_t id = *(uint32_t *)pComponent;
 		size += VE_G_ComponentSizes[id];
 	}
 	return size;
@@ -23,7 +34,6 @@ uint32_t VE_ECS_GetEntitySize(VE_EntityT *pEntity) {
 
 void VE_ECS_InsertComponent(VE_EntityT *pEntity, void *pComponent) {
 	uint32_t id = *(uint32_t *)pComponent;
-	printf("Adding component with ID: %u", id);
 	uint32_t componentSize = VE_G_ComponentSizes[id];
 	uint32_t prevSize = VE_ECS_GetEntitySize(pEntity);
 
@@ -59,6 +69,19 @@ VE_EntityT *VE_ECS_GetEntity(VE_SceneT *pScene, uint32_t index) {
 	}
 }
 
+void VE_ECS_DestroyEntity(VE_EntityT *pEntity) {
+	uint32_t offset = 0;
+	for (uint32_t i = 0; i < pEntity->componentCount; i++) {
+		void *pComponent = (char *)pEntity->pComponents + offset;
+		uint32_t id = *(uint32_t *)pComponent;
+		ComponentDestroySystem destroySystem = VE_G_ComponentDestroySystems[id];
+		if (destroySystem) {
+			destroySystem(pComponent);
+		}
+	}
+	free(pEntity->pComponents);
+}
+
 uint32_t VE_ECS_CreateEntity(VE_SceneT *pScene) {
 	VE_EntityT *pEntities = realloc(pScene->pEntities, (pScene->entityCount + 1) * sizeof(VE_EntityT));
 	if (!pEntities) {
@@ -78,11 +101,18 @@ void VE_ECS_UpdateScene(VE_SceneT *pScene) {
 		for (uint32_t j = 0; j < entity->componentCount; j++) {
 			void *pComponent = (char *)entity->pComponents + offset;
 			uint32_t id = *(uint32_t *)pComponent;
-			ComponentSystem system = VE_G_ComponentSystems[id];
+			ComponentUpdateSystem system = VE_G_ComponentUpdateSystems[id];
 			if (system) {
 				system(entity, pComponent);
 			}
 			offset += VE_G_ComponentSizes[id];
 		}
 	}
+}
+
+void VE_ECS_DestroyScene(VE_SceneT *pScene) {
+	for (uint32_t i = 0; i < pScene->entityCount; i++) {
+		VE_ECS_DestroyEntity(&pScene->pEntities[i]);
+	}
+	free(pScene->pEntities);
 }

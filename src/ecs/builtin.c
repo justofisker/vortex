@@ -46,6 +46,6 @@ VE_Transform VE_NewTransform(vec3 position, vec3 rotation, vec3 scale) {
 }
 
 void VE_SetupBuiltinComponents() {
-	VE_TestComponentID = VE_ECS_RegisterComponent(VE_TestComponent_System, sizeof(VE_TestComponent));
-	VE_TransformID = VE_ECS_RegisterComponent(VE_Transform_System, sizeof(VE_Transform));
+	VE_TestComponentID = VE_ECS_RegisterComponent("TestComponent", sizeof(VE_TestComponent), VE_TestComponent_System, NULL);
+	VE_TransformID = VE_ECS_RegisterComponent("Transform", sizeof(VE_Transform), VE_Transform_System, NULL);
 }

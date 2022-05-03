@@ -32,11 +32,12 @@ int main(int argc, char *argv[]) {
 
     uint32_t ent_handle = VE_ECS_CreateEntity(&scene);
 
-    VE_EntityT *entity = VE_ECS_GetEntity(&scene, ent_handle);
     VE_TestComponent testComponent = VE_NewTestComponent(0);
-    VE_ECS_InsertComponent(entity, &testComponent);
+    VE_ECS_InsertComponent(VE_ECS_GetEntity(&scene, ent_handle), &testComponent);
     VE_Transform transform = VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f });
-    VE_ECS_InsertComponent(entity, &transform);
+    VE_ECS_InsertComponent(VE_ECS_GetEntity(&scene, ent_handle), &transform);
+
+    printf("Transform component ID is %u\n", VE_ECS_GetComponentIdFromName("Transform"));
 
     char running = 1;
     char minimized = 0;
@@ -72,6 +73,8 @@ int main(int argc, char *argv[]) {
         VE_Render_Draw(pTriangleProgram, pVertexBuffer, pIndexBuffer);
         VE_Render_EndFrame();
     }
+
+    VE_ECS_DestroyScene(&scene);
 
     VE_Render_DestroyBuffer(pVertexBuffer);
     VE_Render_DestroyBuffer(pIndexBuffer);

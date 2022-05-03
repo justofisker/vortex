@@ -13,6 +13,7 @@ typedef struct VE_SceneT {
 	uint32_t entityCount;
 } VE_SceneT;
 
-typedef void (*ComponentSystem)(VE_EntityT *, void *);
+typedef void (*ComponentUpdateSystem)(VE_EntityT *, void *);
+typedef void (*ComponentDestroySystem)(void *);
 
 #endif //ECS_TYPES_H
