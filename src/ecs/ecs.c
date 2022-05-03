@@ -80,9 +80,16 @@ void VE_ECS_DestroyEntity(VE_EntityT *pEntity) {
 		}
 	}
 	free(pEntity->pComponents);
+	pEntity->pComponents = NULL;
+	pEntity->componentCount = 0;
 }
 
 uint32_t VE_ECS_CreateEntity(VE_SceneT *pScene) {
+	for (uint32_t i = 0; i < pScene->entityCount; i++) {
+		if (pScene->pEntities[i].pComponents == NULL) {
+			return i;
+		}
+	}
 	VE_EntityT *pEntities = realloc(pScene->pEntities, (pScene->entityCount + 1) * sizeof(VE_EntityT));
 	if (!pEntities) {
 		printf("Failed to create new entity.");
@@ -99,6 +106,10 @@ void VE_ECS_UpdateScene(VE_SceneT *pScene) {
 		VE_EntityT *entity = &pScene->pEntities[i];
 		uint32_t offset = 0;
 		for (uint32_t j = 0; j < entity->componentCount; j++) {
+			// Break if the entity has been deleted or is empty. This is here in case a system deletes the entity.
+			if (entity->pComponents == NULL) {
+				break;
+			}
 			void *pComponent = (char *)entity->pComponents + offset;
 			uint32_t id = *(uint32_t *)pComponent;
 			ComponentUpdateSystem system = VE_G_ComponentUpdateSystems[id];

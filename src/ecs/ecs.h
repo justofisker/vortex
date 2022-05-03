@@ -8,7 +8,9 @@ uint32_t VE_ECS_RegisterComponent(const char* pComponentName, uint32_t component
 // Returns the component ID, or VE_COMPONENT_MAX if it's not found.
 uint32_t VE_ECS_GetComponentIdFromName(const char *pComponentName);
 
+// Create a new entity, or grab an empty one. Note that if an entity does not get components inserted, it will be considered empty and be reused by this function.
 // Returns the index of the newly created entity. If it returns UINT32_MAX, there has been an error.
+// DO NOT attempt to create multiple entities sequentially without adding any components, as you'll just make the same entity over and over again.
 uint32_t VE_ECS_CreateEntity(VE_SceneT *pScene);
 // Byte size of the components block of the specified entity.
 uint32_t VE_ECS_GetEntitySize(VE_EntityT *pEntity);
