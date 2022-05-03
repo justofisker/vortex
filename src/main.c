@@ -2,6 +2,8 @@
 #include <SDL.h>
 #include "render/render.h"
 #include "render/shader.h"
+#include "ecs/ecs.h"
+#include "ecs/builtin.h"
 
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
@@ -23,6 +25,16 @@ int main(int argc, char *argv[]) {
 
     VE_BufferT *pVertexBuffer = VE_Render_CreateVertexBuffer(vertices, sizeof(vertices) / sizeof(vertices[0]));
     VE_BufferT *pIndexBuffer = VE_Render_CreateIndexBuffer(indices, sizeof(indices) / sizeof(indices[0]));
+
+    VE_SetupBuiltinComponents();
+
+    VE_SceneT scene = { NULL, 0 };
+
+    uint32_t ent_handle = VE_CreateEntity(&scene);
+
+    VE_EntityT *entity = VE_GetEntity(&scene, ent_handle);
+    VE_TestComponent testComponent = VE_NewTestComponent(0);
+    VE_InsertComponent(entity, &testComponent);
 
     char running = 1;
     char minimized = 0;
@@ -49,6 +61,10 @@ int main(int argc, char *argv[]) {
             }
         }
         if (minimized) continue;
+        // Tick
+        VE_UpdateScene(&scene);
+
+        // Render
         VE_Render_BeginFrame();
         VE_Render_UpdateUniformBuffer(pTriangleProgram);
         VE_Render_Draw(pTriangleProgram, pVertexBuffer, pIndexBuffer);

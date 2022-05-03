@@ -35,6 +35,12 @@ add_executable(vortex
         "src/render/shader.h"
         "src/render/util.c"
         "src/render/util.h"
+        "src/ecs/ecs.c"
+        "src/ecs/ecs.h"
+        "src/ecs/globals.c"
+        "src/ecs/globals.h"
+        "src/ecs/builtin.c"
+        "src/ecs/builtin.h"
         ${SHADERS}
         )
 
