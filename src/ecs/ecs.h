@@ -4,6 +4,8 @@
 #include "types.h"
 
 // Returns new component type's ID. If it returns VE_COMPONENT_MAX, then we are out of component slots.
+// The update system runs every frame and has two parameters, a VE_EntityT* and a void* which points to the component's data.
+// The destroy system is run when the entity is deleted, and just takes a void* which points to the component's data.
 uint32_t VE_ECS_RegisterComponent(const char* pComponentName, uint32_t componentSize, ComponentUpdateSystem componentUpdateSystem, ComponentDestroySystem componentDestroySystem);
 // Returns the component ID, or VE_COMPONENT_MAX if it's not found.
 uint32_t VE_ECS_GetComponentIdFromName(const char *pComponentName);
