@@ -6,6 +6,7 @@
 #include "globals.h"
 #include "SDL_vulkan.h"
 #include "util.h"
+#include <string.h>
 
 #ifndef NDEBUG
 int VE_Render_CheckValidationSupport() {

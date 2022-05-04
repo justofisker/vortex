@@ -27,6 +27,7 @@ typedef struct VE_ProgramT {
 typedef struct VE_VertexT {
     vec2 pos;
     vec3 color;
+    vec2 texCoord;
 } VE_VertexT;
 
 typedef struct VE_UniformBufferObjectT {
@@ -40,5 +41,16 @@ typedef struct VE_BufferT {
     VkDeviceMemory deviceMemory;
     uint32_t instanceCount;
 } VE_BufferT;
+
+typedef struct VE_TextureT {
+    VkImage image;
+    VkDeviceMemory memory;
+    VkImageView imageView;
+    VkSampler sampler;
+} VE_TextureT;
+
+typedef struct VE_LoadTextureOptionsT {
+    uint32_t e;
+} VE_LoadTextureOptionsT;
 
 #endif //RENDER_TYPES_H

@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include "globals.h"
 #include <stdio.h>
+#include <string.h>
 #include <cglm/cglm.h>
 #include "util.h"
 
@@ -27,23 +28,34 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
 
     VkDescriptorSetLayoutBinding uboLayoutBinding = { 0 };
     uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.pImmutableSamplers = NULL;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    VkDescriptorSetLayoutBinding samplerLayoutBinding = { 0 };
+    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.pImmutableSamplers = NULL;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding, samplerLayoutBinding };
 
     VkDescriptorSetLayoutCreateInfo layoutInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings = &uboLayoutBinding;
+    layoutInfo.bindingCount = 2;
+    layoutInfo.pBindings = bindings;
 
     vkCreateDescriptorSetLayout(VE_G_Device, &layoutInfo, NULL, &pProgram->descriptorSetLayout);
 
-    VkDescriptorPoolSize poolSize = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER };
-    poolSize.descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+    VkDescriptorPoolSize pPoolSizes[2] = { 0 };
+    pPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    pPoolSizes[0].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+    pPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pPoolSizes[1].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-    descriptorPoolCreateInfo.poolSizeCount = 1;
-    descriptorPoolCreateInfo.pPoolSizes = &poolSize;
+    descriptorPoolCreateInfo.poolSizeCount = 2;
+    descriptorPoolCreateInfo.pPoolSizes = pPoolSizes;
     descriptorPoolCreateInfo.maxSets = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 
     vkCreateDescriptorPool(VE_G_Device, &descriptorPoolCreateInfo, NULL, &pProgram->descriptorPool);
@@ -53,7 +65,6 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
         pDescriptorSetLayouts[i] = pProgram->descriptorSetLayout;
 
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-    descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     descriptorSetAllocateInfo.descriptorPool = pProgram->descriptorPool;
     descriptorSetAllocateInfo.descriptorSetCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
     descriptorSetAllocateInfo.pSetLayouts = pDescriptorSetLayouts;
@@ -67,7 +78,6 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
         bufferInfo.range = sizeof(VE_UniformBufferObjectT);
 
         VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrite.dstSet = pProgram->pDescriptorSets[i];
         descriptorWrite.dstBinding = 0;
         descriptorWrite.dstArrayElement = 0;
@@ -104,7 +114,7 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
     bindingDescription.stride = sizeof(VE_VertexT);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkVertexInputAttributeDescription pAttributeDescriptions[2] = { 0 };
+    VkVertexInputAttributeDescription pAttributeDescriptions[3] = { 0 };
     pAttributeDescriptions[0].binding = 0;
     pAttributeDescriptions[0].location = 0;
     pAttributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
@@ -113,11 +123,15 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
     pAttributeDescriptions[1].location = 1;
     pAttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     pAttributeDescriptions[1].offset = offsetof(VE_VertexT, color);
+    pAttributeDescriptions[2].binding = 0;
+    pAttributeDescriptions[2].location = 2;
+    pAttributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+    pAttributeDescriptions[2].offset = offsetof(VE_VertexT, texCoord);
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = 2;
+    vertexInputInfo.vertexAttributeDescriptionCount = 3;
     vertexInputInfo.pVertexAttributeDescriptions = pAttributeDescriptions;
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
@@ -345,4 +359,25 @@ void VE_Render_UpdateUniformBuffer(VE_ProgramT *pProgram) {
     vkMapMemory(VE_G_Device, pProgram->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(VE_G_Device, pProgram->pUniformBufferMemory[VE_G_CurrentFrame]);
+}
+
+void VE_Render_SetProgramSampler(VE_ProgramT *pProgram, VE_TextureT *pTexture) {
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        VkDescriptorImageInfo imageInfo = { 0 };
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = pTexture->imageView;
+        imageInfo.sampler = pTexture->sampler;
+
+        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+        descriptorWrite.dstSet = pProgram->pDescriptorSets[i];
+        descriptorWrite.dstBinding = 1;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = NULL;
+        descriptorWrite.pImageInfo = &imageInfo;
+        descriptorWrite.pTexelBufferView = NULL;
+
+        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
+    }
 }

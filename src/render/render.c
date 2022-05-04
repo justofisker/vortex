@@ -6,6 +6,8 @@
 #include "globals.h"
 #include "shader.h"
 #include "util.h"
+#include <stdlib.h>
+#include <string.h>
 
 void VE_Render_Init(SDL_Window *window) {
     VE_G_Window = window;
