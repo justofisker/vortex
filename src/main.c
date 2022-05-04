@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include "render/render.h"
 #include "render/shader.h"
+#include "render/texture.h"
 #include "ecs/ecs.h"
 #include "ecs/builtin.h"
 
@@ -11,12 +12,14 @@ int main(int argc, char *argv[]) {
     SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
+    VE_TextureT *pTexture = VE_Render_LoadTexture("texture.jpg", NULL);
+    VE_Render_SetProgramSampler(pTriangleProgram, pTexture);
 
     VE_VertexT vertices[] = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
     };
 
     uint16_t indices[] = {
@@ -52,6 +55,7 @@ int main(int argc, char *argv[]) {
                     switch (event.window.event) {
                         case SDL_WINDOWEVENT_RESIZED:
                             VE_Render_Resize();
+                            VE_Render_SetProgramSampler(pTriangleProgram, pTexture);
                             break;
                         case SDL_WINDOWEVENT_MINIMIZED:
                             minimized = 1;
@@ -76,6 +80,7 @@ int main(int argc, char *argv[]) {
 
     VE_ECS_DestroyScene(&scene);
 
+    VE_Render_DestroyTexture(pTexture);
     VE_Render_DestroyBuffer(pVertexBuffer);
     VE_Render_DestroyBuffer(pIndexBuffer);
     VE_Render_DestroyProgram(pTriangleProgram);

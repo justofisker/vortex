@@ -17,7 +17,7 @@ set(SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 foreach(SHADER IN LISTS SHADERS)
     get_filename_component(FILENAME ${SHADER} NAME_WLE)
     add_custom_command(OUTPUT ${SHADER_OUTPUT_DIR}/${FILENAME}.spv
-            COMMAND glslangValidator -V -o ${SHADER_OUTPUT_DIR}/${FILENAME}.spv ${SHADER}
+            COMMAND ${SHADER_COMPILER} -V -o ${SHADER_OUTPUT_DIR}/${FILENAME}.spv ${SHADER}
             DEPENDS ${SHADER}
             COMMENT "Compiling ${FILENAME}.glsl")
     list(APPEND SPV_SHADERS ${SHADER_OUTPUT_DIR}/${FILENAME}.spv)
@@ -41,6 +41,8 @@ add_executable(vortex
         "src/ecs/globals.h"
         "src/ecs/builtin.c"
         "src/ecs/builtin.h"
+        "src/render/texture.c"
+        "src/render/texture.h"
         ${SHADERS}
         )
 
@@ -48,6 +50,7 @@ add_dependencies(vortex shaders)
 
 target_include_directories(vortex PRIVATE
         "extern/SDL2/include"
+        "extern/stb"
         volk_headers
         )
 

@@ -8,5 +8,6 @@ void VE_Render_DestroyProgram(VE_ProgramT *pProgram);
 void VE_Render_DestroyAllPrograms(char freeMemory);
 void VE_Render_RecreateAllPrograms();
 void VE_Render_UpdateUniformBuffer(VE_ProgramT *pProgram);
+void VE_Render_SetProgramSampler(VE_ProgramT *pProgram, VE_TextureT *pTexture);
 
 #endif //RENDER_SHADER_H

@@ -2,6 +2,7 @@
 #include "util.h"
 #include <stdio.h>
 #include "globals.h"
+#include <stdlib.h>
 
 char *VE_Util_ReadFile(const char *path, uint32_t *size) {
     FILE* file;
@@ -23,7 +24,7 @@ char *VE_Util_ReadFile(const char *path, uint32_t *size) {
     return content;
 }
 
-static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t VE_Render_FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(VE_G_PhysicalDevice, &memProperties);
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
@@ -48,7 +49,7 @@ void VE_Render_CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
 
     VkMemoryAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = VE_Render_FindMemoryType(memRequirements.memoryTypeBits, properties);
 
     vkAllocateMemory(VE_G_Device, &allocInfo, NULL, pBufferMemory);
 
@@ -56,6 +57,18 @@ void VE_Render_CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
 }
 
 void VE_Render_CopyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size) {
+    VkCommandBuffer commandBuffer = VE_Render_BeginSingleUseCommand();
+
+    VkBufferCopy copyRegion = { 0 };
+    copyRegion.srcOffset = 0; // Optional
+    copyRegion.dstOffset = 0; // Optional
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
+
+    VE_Render_EndSingleUseCommand(commandBuffer);
+}
+
+VkCommandBuffer VE_Render_BeginSingleUseCommand() {
     VkCommandBufferAllocateInfo allocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandPool = VE_G_TransferCommandPool;
@@ -69,12 +82,10 @@ void VE_Render_CopyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size) {
 
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-    VkBufferCopy copyRegion = { 0 };
-    copyRegion.srcOffset = 0; // Optional
-    copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = size;
-    vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
+    return commandBuffer;
+}
 
+void VE_Render_EndSingleUseCommand(VkCommandBuffer commandBuffer) {
     vkEndCommandBuffer(commandBuffer);
 
     VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
