@@ -27,6 +27,10 @@ extern VkFence VE_G_pInFlightFences[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
 extern VE_ProgramT *VE_G_ppPrograms[VE_RENDER_MAX_PROGRAMS];
 extern uint32_t VE_G_ProgramCount;
 extern uint32_t VE_G_CurrentFrame;
+extern VkImage VE_G_DepthImage;
+extern VkDeviceMemory VE_G_DepthImageMemory;
+extern VkImageView VE_G_DepthImageView;
+extern VkFormat VE_G_DepthImageFormat;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG
