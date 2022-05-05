@@ -5,6 +5,7 @@
 #include "render/texture.h"
 #include "ecs/ecs.h"
 #include "ecs/builtin.h"
+#include "audio/audio.h"
 
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -29,18 +30,16 @@ int main(int argc, char *argv[]) {
     VE_BufferT *pVertexBuffer = VE_Render_CreateVertexBuffer(vertices, sizeof(vertices) / sizeof(vertices[0]));
     VE_BufferT *pIndexBuffer = VE_Render_CreateIndexBuffer(indices, sizeof(indices) / sizeof(indices[0]));
 
+    VE_Audio_Init(2);
+
     VE_SetupBuiltinComponents();
 
-    VE_SceneT scene = { NULL, 0 };
+    VE_EntityHandleT ent_handle = VE_ECS_CreateEntity();
 
-    uint32_t ent_handle = VE_ECS_CreateEntity(&scene);
-
-    VE_TestComponent testComponent = VE_NewTestComponent(0);
-    VE_ECS_InsertComponent(VE_ECS_GetEntity(&scene, ent_handle), &testComponent);
+    VE_TestComponentSpawner testComponentSpawner = VE_NewTestComponentSpawner();
+    VE_ECS_InsertComponent(ent_handle, &testComponentSpawner);
     VE_Transform transform = VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f });
-    VE_ECS_InsertComponent(VE_ECS_GetEntity(&scene, ent_handle), &transform);
-
-    printf("Transform component ID is %u\n", VE_ECS_GetComponentIdFromName("Transform"));
+    VE_ECS_InsertComponent(ent_handle, &transform);
 
     char running = 1;
     char minimized = 0;
@@ -69,7 +68,7 @@ int main(int argc, char *argv[]) {
         }
         if (minimized) continue;
         // Tick
-        VE_ECS_UpdateScene(&scene);
+        VE_ECS_UpdateScene();
 
         // Render
         VE_Render_BeginFrame();
@@ -78,7 +77,9 @@ int main(int argc, char *argv[]) {
         VE_Render_EndFrame();
     }
 
-    VE_ECS_DestroyScene(&scene);
+    VE_ECS_DestroyScene();
+
+    VE_Audio_Destroy();
 
     VE_Render_DestroyTexture(pTexture);
     VE_Render_DestroyBuffer(pVertexBuffer);

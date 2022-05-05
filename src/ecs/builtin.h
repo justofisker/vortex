@@ -9,16 +9,23 @@
 typedef struct VE_TestComponent {
 	uint32_t _id;
 	int counter;
+	int maxVal;
 } VE_TestComponent;
 extern uint32_t VE_TestComponentID;
-VE_TestComponent VE_NewTestComponent(int counter);
+VE_TestComponent VE_NewTestComponent(int counter, int maxVal);
+
+typedef struct VE_TestComponentSpawner {
+	uint32_t id;
+} VE_TestComponentSpawner;
+extern uint32_t VE_TestComponentSpawnerID;
+VE_TestComponentSpawner VE_NewTestComponentSpawner();
 
 typedef struct VE_Transform {
 	uint32_t _id;
 	vec3 position;
 	vec3 rotation;
 	vec3 scale;
-	bool _update;
+	char _update;
 	mat4 _matrix;
 } VE_Transform;
 extern uint32_t VE_TransformID;

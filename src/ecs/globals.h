@@ -12,5 +12,6 @@ extern ComponentDestroySystem VE_G_ComponentDestroySystems[VE_ECS_COMPONENT_MAX]
 extern uint32_t VE_G_ComponentSizes[VE_ECS_COMPONENT_MAX];
 extern const char *VE_G_pComponentNames[VE_ECS_COMPONENT_MAX];
 extern uint32_t VE_G_ComponentCount;
+extern VE_SceneT VE_G_CurrentScene;
 
 #endif //ECS_GLOBALS_H

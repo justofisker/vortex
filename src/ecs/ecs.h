@@ -13,16 +13,15 @@ uint32_t VE_ECS_GetComponentIdFromName(const char *pComponentName);
 // Create a new entity, or grab an empty one. Note that if an entity does not get components inserted, it will be considered empty and be reused by this function.
 // Returns the index of the newly created entity. If it returns UINT32_MAX, there has been an error.
 // DO NOT attempt to create multiple entities sequentially without adding any components, as you'll just make the same entity over and over again.
-uint32_t VE_ECS_CreateEntity(VE_SceneT *pScene);
+VE_EntityHandleT VE_ECS_CreateEntity();
 // Byte size of the components block of the specified entity.
-uint32_t VE_ECS_GetEntitySize(VE_EntityT *pEntity);
-void VE_ECS_InsertComponent(VE_EntityT *pEntity, void *pComponent);
-void *VE_ECS_GetComponent(VE_EntityT *pEntity, uint32_t id);
-VE_EntityT *VE_ECS_GetEntity(VE_SceneT *pScene, uint32_t index);
-void VE_ECS_DestroyEntity(VE_EntityT *pEntity);
+uint32_t VE_ECS_GetEntitySize(VE_EntityHandleT entityHandle);
+void VE_ECS_InsertComponent(VE_EntityHandleT entityHandle, void *pComponent);
+void *VE_ECS_GetComponent(VE_EntityHandleT entityHandle, uint32_t id);
+void VE_ECS_DestroyEntity(VE_EntityHandleT entityHandle);
 
-void VE_ECS_UpdateScene(VE_SceneT *pScene);
+void VE_ECS_UpdateScene();
 
-void VE_ECS_DestroyScene(VE_SceneT *pScene);
+void VE_ECS_DestroyScene();
 
 #endif //ECS_ECS_H

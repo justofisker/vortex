@@ -23,6 +23,9 @@ foreach(SHADER IN LISTS SHADERS)
     list(APPEND SPV_SHADERS ${SHADER_OUTPUT_DIR}/${FILENAME}.spv)
 endForeach()
 
+set(SUPPORT_OGG ON)
+set(SUPPORT_WAV ON)
+
 add_executable(vortex
         "src/main.c"
         "src/render/render.c"
@@ -35,14 +38,16 @@ add_executable(vortex
         "src/render/shader.h"
         "src/render/util.c"
         "src/render/util.h"
+        "src/render/texture.c"
+        "src/render/texture.h"
         "src/ecs/ecs.c"
         "src/ecs/ecs.h"
         "src/ecs/globals.c"
         "src/ecs/globals.h"
         "src/ecs/builtin.c"
         "src/ecs/builtin.h"
-        "src/render/texture.c"
-        "src/render/texture.h"
+        "src/audio/audio.c"
+        "src/audio/audio.h"
         ${SHADERS}
         )
 
@@ -50,6 +55,7 @@ add_dependencies(vortex shaders)
 
 target_include_directories(vortex PRIVATE
         "extern/SDL2/include"
+        "extern/SDL_mixer/include"
         "extern/stb"
         volk_headers
         )
@@ -57,6 +63,7 @@ target_include_directories(vortex PRIVATE
 target_link_libraries(vortex PRIVATE
         SDL2
         SDL2main
+        SDL2_mixer
         volk
         cglm
         )
@@ -79,7 +86,9 @@ add_subdirectory("extern/volk")
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 option(BUILD_SHARED_LIBS "" ON)
+
 add_subdirectory("extern/SDL2")
+add_subdirectory("extern/SDL_mixer")
 
 option(CGLM_SHARED "Shared build" OFF)
 option(CGLM_STATIC "Static build" ON)
