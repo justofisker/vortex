@@ -7,6 +7,6 @@
 [submodule "extern/cglm"]
 	path = extern/cglm
 	url = https://github.com/recp/cglm
-[submodule "extern/SDL_mixer"]
-	path = extern/SDL_mixer
-	url = https://github.com/libsdl-org/SDL_mixer.git
+[submodule "extern/openal-soft"]
+	path = extern/openal-soft
+	url = https://github.com/kcat/openal-soft.git

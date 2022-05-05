@@ -23,9 +23,6 @@ foreach(SHADER IN LISTS SHADERS)
     list(APPEND SPV_SHADERS ${SHADER_OUTPUT_DIR}/${FILENAME}.spv)
 endForeach()
 
-set(SUPPORT_OGG ON)
-set(SUPPORT_WAV ON)
-
 add_executable(vortex
         "src/main.c"
         "src/render/render.c"
@@ -48,6 +45,8 @@ add_executable(vortex
         "src/ecs/builtin.h"
         "src/audio/audio.c"
         "src/audio/audio.h"
+        "src/audio/globals.c"
+        "src/audio/globals.h"
         ${SHADERS}
         )
 
@@ -55,17 +54,17 @@ add_dependencies(vortex shaders)
 
 target_include_directories(vortex PRIVATE
         "extern/SDL2/include"
-        "extern/SDL_mixer/include"
         "extern/stb"
+        "extern/openal-soft/include"
         volk_headers
         )
 
 target_link_libraries(vortex PRIVATE
         SDL2
         SDL2main
-        SDL2_mixer
         volk
         cglm
+        OpenAL
         )
 
 if (UNIX)
@@ -88,13 +87,14 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 option(BUILD_SHARED_LIBS "" ON)
 
 add_subdirectory("extern/SDL2")
-add_subdirectory("extern/SDL_mixer")
 
 option(CGLM_SHARED "Shared build" OFF)
 option(CGLM_STATIC "Static build" ON)
 option(CGLM_USE_C99 "" OFF)
 option(CGLM_USE_TEST "Enable Tests" OFF)
 add_subdirectory("extern/cglm/")
+
+add_subdirectory("extern/openal-soft")
 
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)

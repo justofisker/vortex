@@ -2,6 +2,7 @@
 #define ECS_BUILTIN_H
 
 #include "types.h"
+#include "../audio/audio.h"
 #include "cglm/cglm.h"
 #include "cglm/mat4.h"
 #include "cglm/euler.h"

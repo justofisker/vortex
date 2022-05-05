@@ -30,16 +30,16 @@ int main(int argc, char *argv[]) {
     VE_BufferT *pVertexBuffer = VE_Render_CreateVertexBuffer(vertices, sizeof(vertices) / sizeof(vertices[0]));
     VE_BufferT *pIndexBuffer = VE_Render_CreateIndexBuffer(indices, sizeof(indices) / sizeof(indices[0]));
 
-    VE_Audio_Init(2);
+    VE_Audio_Init();
 
     VE_SetupBuiltinComponents();
 
-    VE_EntityHandleT ent_handle = VE_ECS_CreateEntity();
+    VE_EntityHandleT entHandle = VE_ECS_CreateEntity();
 
     VE_TestComponentSpawner testComponentSpawner = VE_NewTestComponentSpawner();
-    VE_ECS_InsertComponent(ent_handle, &testComponentSpawner);
+    VE_ECS_InsertComponent(entHandle, &testComponentSpawner);
     VE_Transform transform = VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f });
-    VE_ECS_InsertComponent(ent_handle, &transform);
+    VE_ECS_InsertComponent(entHandle, &transform); 
 
     char running = 1;
     char minimized = 0;
