@@ -23,8 +23,8 @@ void VE_Render_Init(SDL_Window *window) {
     VE_Render_CreateSurface();
     VE_Render_PickPhysicalDeviceAndQueues();
     VE_Render_CreateDevice();
-    VE_Render_CreateSwapchain();
     VE_Render_CreateCommandPool();
+    VE_Render_CreateSwapchain();
     VE_Render_CreateSyncObjects();
 
     VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -45,6 +45,9 @@ void VE_Render_Destroy() {
     }
     vkDestroyCommandPool(VE_G_Device, VE_G_TransferCommandPool, NULL);
     vkDestroyCommandPool(VE_G_Device, VE_G_CommandPool, NULL);
+    vkDestroyImage(VE_G_Device, VE_G_DepthImage, NULL);
+    vkFreeMemory(VE_G_Device, VE_G_DepthImageMemory, NULL);
+    vkDestroyImageView(VE_G_Device, VE_G_DepthImageView, NULL);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
         vkDestroyImageView(VE_G_Device, VE_G_pSwapchainImageViews[i], NULL);
     }
@@ -63,6 +66,9 @@ void VE_Render_Destroy() {
 void VE_Render_Resize() {
     vkDeviceWaitIdle(VE_G_Device);
 
+    vkDestroyImage(VE_G_Device, VE_G_DepthImage, NULL);
+    vkFreeMemory(VE_G_Device, VE_G_DepthImageMemory, NULL);
+    vkDestroyImageView(VE_G_Device, VE_G_DepthImageView, NULL);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
         vkDestroyImageView(VE_G_Device, VE_G_pSwapchainImageViews[i], NULL);
     }
@@ -88,9 +94,17 @@ void VE_Render_BeginFrame() {
         perror("Failed to acquire swapchain image!\n");
         exit(-1);
     }
+
+    VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = NULL;
+
+    vkBeginCommandBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame], &beginInfo);
 }
 
 void VE_Render_EndFrame() {
+    vkEndCommandBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame]);
+
     VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 
     VkSemaphore waitSemaphores[] = { VE_G_pImageAvailableSemaphores[VE_G_CurrentFrame] };
@@ -123,20 +137,14 @@ void VE_Render_EndFrame() {
 }
 
 void VE_Render_Draw(VE_ProgramT *pProgram, VE_BufferT *pVertexBuffer, VE_BufferT *pIndexBuffer) {
-    VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    beginInfo.pInheritanceInfo = NULL;
-
-    vkBeginCommandBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame], &beginInfo);
-
     VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
     renderPassInfo.renderPass = pProgram->renderPass;
     renderPassInfo.framebuffer = pProgram->pFramebuffers[imageIndex];
     renderPassInfo.renderArea.offset = (VkOffset2D){0, 0};
     renderPassInfo.renderArea.extent = VE_G_SwapchainExtent;
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+    VkClearValue clearColor[2] = { {{{0.0f, 0.0f, 0.0f, 1.0f}}}, {1.0f, 0}};
+    renderPassInfo.clearValueCount = 2;
+    renderPassInfo.pClearValues = clearColor;
     vkCmdBeginRenderPass(VE_G_pCommandBuffers[VE_G_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pProgram->pipeline);
 
@@ -147,8 +155,6 @@ void VE_Render_Draw(VE_ProgramT *pProgram, VE_BufferT *pVertexBuffer, VE_BufferT
 
     vkCmdDrawIndexed(VE_G_pCommandBuffers[VE_G_CurrentFrame], pIndexBuffer->instanceCount, 1, 0, 0, 0);
     vkCmdEndRenderPass(VE_G_pCommandBuffers[VE_G_CurrentFrame]);
-
-    vkEndCommandBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame]);
 }
 
 VE_BufferT *VE_Render_CreateVertexBuffer(VE_VertexT *vertices, uint32_t count) {
