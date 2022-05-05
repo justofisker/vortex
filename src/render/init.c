@@ -7,6 +7,7 @@
 #include "SDL_vulkan.h"
 #include "util.h"
 #include <string.h>
+#include "texture.h"
 
 #ifndef NDEBUG
 int VE_Render_CheckValidationSupport() {
@@ -210,6 +211,31 @@ void VE_Render_CreateSurface()
     }
 }
 
+static VkFormat VE_Render_FindSupportedFormat(VkFormat *pFormats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features) {
+    for (uint32_t i = 0; i < formatCount; ++i) {
+        VkFormatProperties properties;
+        vkGetPhysicalDeviceFormatProperties(VE_G_PhysicalDevice, pFormats[i], &properties);
+
+        if (tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & features) == features) {
+            return pFormats[i];
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & features) == features) {
+            return pFormats[i];
+        }
+    }
+
+    fprintf(stderr, "failed to find format!\n");
+    exit(-1);
+}
+
+static VkFormat VE_Render_FindDepthFormat() {
+    VkFormat pFormats[] = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
+    return VE_Render_FindSupportedFormat(pFormats, sizeof(pFormats) / sizeof(pFormats[0]), VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+static char VE_Render_HasStencilComponent(VkFormat format) {
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
 void VE_Render_CreateSwapchain() {
     uint32_t availableFormatsCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(VE_G_PhysicalDevice, VE_G_Surface, &availableFormatsCount, NULL);
@@ -217,7 +243,8 @@ void VE_Render_CreateSwapchain() {
     vkGetPhysicalDeviceSurfaceFormatsKHR(VE_G_PhysicalDevice, VE_G_Surface, &availableFormatsCount, pAvailableFormats);
     VkSurfaceFormatKHR surfaceFormat = pAvailableFormats[0];
     for (uint32_t i = 0; i < availableFormatsCount; ++i) {
-        if (pAvailableFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB && pAvailableFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+        if (pAvailableFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
+            pAvailableFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             surfaceFormat = pAvailableFormats[i];
             break;
         }
@@ -228,7 +255,8 @@ void VE_Render_CreateSwapchain() {
     uint32_t availablePresentModesCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(VE_G_PhysicalDevice, VE_G_Surface, &availablePresentModesCount, NULL);
     VkPresentModeKHR *pAvailablePresentModes = malloc(sizeof(VkPresentModeKHR) * availablePresentModesCount);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(VE_G_PhysicalDevice, VE_G_Surface, &availablePresentModesCount, pAvailablePresentModes);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(VE_G_PhysicalDevice, VE_G_Surface, &availablePresentModesCount,
+                                              pAvailablePresentModes);
     VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
     for (uint32_t i = 0; i < availablePresentModesCount; ++i) {
         if (pAvailablePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -242,7 +270,7 @@ void VE_Render_CreateSwapchain() {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VE_G_PhysicalDevice, VE_G_Surface, &surfaceCapabilities);
     int w, h;
     SDL_Vulkan_GetDrawableSize(VE_G_Window, &w, &h);
-    VE_G_SwapchainExtent = (VkExtent2D){
+    VE_G_SwapchainExtent = (VkExtent2D) {
             min(max(w, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width),
             min(max(h, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height),
     };
@@ -251,7 +279,7 @@ void VE_Render_CreateSwapchain() {
     if (surfaceCapabilities.maxImageCount)
         imageCount = min(imageCount, surfaceCapabilities.maxImageCount);
 
-    VkSwapchainCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
+    VkSwapchainCreateInfoKHR createInfo = {VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
     createInfo.surface = VE_G_Surface;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
@@ -260,7 +288,7 @@ void VE_Render_CreateSwapchain() {
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    uint32_t pQueueFamilyIndices[] = { VE_G_GraphicsQueueIndex, VE_G_PresentQueueIndex };
+    uint32_t pQueueFamilyIndices[] = {VE_G_GraphicsQueueIndex, VE_G_PresentQueueIndex};
     if (VE_G_GraphicsQueueIndex != VE_G_PresentQueueIndex) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
@@ -285,22 +313,18 @@ void VE_Render_CreateSwapchain() {
 
     VE_G_pSwapchainImageViews = malloc(sizeof(VkImageView) * VE_G_SwapchainImageCount);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
-        VkImageViewCreateInfo imageViewCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-        imageViewCreateInfo.image = VE_G_pSwapchainImages[i];
-        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        imageViewCreateInfo.format = surfaceFormat.format;
-        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = 1;
-        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = 1;
-
-        vkCreateImageView(VE_G_Device, &imageViewCreateInfo, NULL, &VE_G_pSwapchainImageViews[i]);
+        VE_G_pSwapchainImageViews[i] = VE_Render_CreateImageView(VE_G_pSwapchainImages[i], VE_G_SwapchainFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
+
+    VE_G_DepthImageFormat = VE_Render_FindDepthFormat();
+
+    VE_Render_CreateImage(VE_G_SwapchainExtent.width, VE_G_SwapchainExtent.height, VE_G_DepthImageFormat, VK_IMAGE_TILING_OPTIMAL,
+                          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                          &VE_G_DepthImage, &VE_G_DepthImageMemory);
+
+    VE_G_DepthImageView = VE_Render_CreateImageView(VE_G_DepthImage, VE_G_DepthImageFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+    VE_Render_TransitionImageLayout(VE_G_DepthImage, VE_G_DepthImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 void VE_Render_CreateCommandPool() {
