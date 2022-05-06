@@ -53,6 +53,7 @@ target_link_libraries(vortex PRIVATE
         SDL2main
         volk
         cglm
+        spirv-reflect-static
         )
 
 if (UNIX)
@@ -80,6 +81,11 @@ option(CGLM_STATIC "Static build" ON)
 option(CGLM_USE_C99 "" OFF)
 option(CGLM_USE_TEST "Enable Tests" OFF)
 add_subdirectory("extern/cglm/")
+
+option(SPIRV_REFLECT_EXECUTABLE     "Build spirv-reflect executable" OFF)
+option(SPIRV_REFLECT_EXAMPLES       "Build stripper examples" OFF)
+option(SPIRV_REFLECT_STATIC_LIB     "Build a SPIRV-Reflect static library" ON)
+add_subdirectory("extern/SPIRV-Reflect")
 
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)

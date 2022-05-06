@@ -7,3 +7,6 @@
 [submodule "extern/cglm"]
 	path = extern/cglm
 	url = https://github.com/recp/cglm
+[submodule "extern/SPIRV-Reflect"]
+	path = extern/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect
