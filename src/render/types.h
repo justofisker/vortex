@@ -12,14 +12,9 @@ typedef struct SDL_Window SDL_Window;
 
 typedef struct VE_ProgramT {
     VkPipeline pipeline;
-    VkRenderPass renderPass;
     VkPipelineLayout layout;
-    VkFramebuffer *pFramebuffers;
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorPool descriptorPool;
-    VkDescriptorSet pDescriptorSets[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
-    VkBuffer pUniformBuffer[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
-    VkDeviceMemory pUniformBufferMemory[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+    uint32_t descriptorSetLayoutCount;
+    VkDescriptorSetLayout *pDescriptorSetLayouts;
     const char *pVertexPath;
     const char *pFragmentPath;
 } VE_ProgramT;
@@ -59,5 +54,23 @@ typedef struct VE_ProgramSourceT {
     uint32_t *pFragmentSource;
     uint32_t fragmentLength;
 } VE_ProgramSourceT;
+
+typedef struct VE_Transform_T {
+    vec3 position;
+    vec3 scale;
+    versor rotation;
+} VE_Transform_T;
+
+typedef struct VE_MeshObject_T {
+    VE_BufferT *pVertexBuffer;
+    VE_BufferT *pIndexBuffer;
+    VE_ProgramT *pProgram;
+    VE_Transform_T transform;
+
+    VkDescriptorPool descriptorPool;
+    VkDescriptorSet pDescriptorSets[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+    VkBuffer pUniformBuffer[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+    VkDeviceMemory pUniformBufferMemory[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+} VE_MeshObject_T;
 
 #endif //RENDER_TYPES_H

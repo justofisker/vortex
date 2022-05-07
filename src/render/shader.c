@@ -8,6 +8,7 @@
 #include "util.h"
 #include <spirv_reflect.h>
 #include <assert.h>
+#include "render.h"
 
 VkShaderModule VE_Render_CreateShaderModule(uint32_t* pData, uint32_t size) {
     VkShaderModuleCreateInfo createInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
@@ -20,82 +21,15 @@ VkShaderModule VE_Render_CreateShaderModule(uint32_t* pData, uint32_t size) {
     return shaderModule;
 }
 
-static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char *pVertexPath, const char *pFragmentPath) {
-    VkDeviceSize bufferSize = sizeof(VE_UniformBufferObjectT);
-    for (size_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; i++) {
-        VE_Render_CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                               &pProgram->pUniformBuffer[i], &pProgram->pUniformBufferMemory[i]);
-    }
-
+static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char *pVertexPath, const char *pFragmentPath, char newLayout) {
     VE_ProgramSourceT programSource = { 0 };
     programSource.pVertexSource =  (uint32_t*) VE_Util_ReadFile(pVertexPath, &programSource.vertexLength);
     programSource.pFragmentSource = (uint32_t*) VE_Util_ReadFile(pFragmentPath, &programSource.fragmentLength);
 
-    VE_Render_CreateProgramLayout(pProgram, &programSource);
-
-    VkDescriptorPoolSize pPoolSizes[2] = { 0 };
-    pPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    pPoolSizes[0].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-    pPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pPoolSizes[1].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-    descriptorPoolCreateInfo.poolSizeCount = 2;
-    descriptorPoolCreateInfo.pPoolSizes = pPoolSizes;
-    descriptorPoolCreateInfo.maxSets = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-
-    vkCreateDescriptorPool(VE_G_Device, &descriptorPoolCreateInfo, NULL, &pProgram->descriptorPool);
-
-    VkDescriptorSetLayout pDescriptorSetLayouts[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i)
-        pDescriptorSetLayouts[i] = pProgram->descriptorSetLayout;
-
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-    descriptorSetAllocateInfo.descriptorPool = pProgram->descriptorPool;
-    descriptorSetAllocateInfo.descriptorSetCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-    descriptorSetAllocateInfo.pSetLayouts = pDescriptorSetLayouts;
-
-    vkAllocateDescriptorSets(VE_G_Device, &descriptorSetAllocateInfo, pProgram->pDescriptorSets);
-
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
-        VkDescriptorBufferInfo bufferInfo = { 0 };
-        bufferInfo.buffer = pProgram->pUniformBuffer[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(VE_UniformBufferObjectT);
-
-        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-        descriptorWrite.dstSet = pProgram->pDescriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = NULL;
-        descriptorWrite.pTexelBufferView = NULL;
-
-        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
-    }
-
-    pProgram->renderPass = VE_Render_CreateRenderpass();
+    if (newLayout)
+        VE_Render_CreateProgramLayout(pProgram, &programSource);
 
     VE_Render_CreateGraphicsPipeline(pProgram, &programSource);
-
-    VkImageView framebufferAttachments[] = { VK_NULL_HANDLE, VE_G_DepthImageView };
-
-    VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-    framebufferInfo.renderPass = pProgram->renderPass;
-    framebufferInfo.attachmentCount = sizeof(framebufferAttachments) / sizeof(framebufferAttachments[0]);
-    framebufferInfo.pAttachments = framebufferAttachments;
-    framebufferInfo.width = VE_G_SwapchainExtent.width;
-    framebufferInfo.height = VE_G_SwapchainExtent.height;
-    framebufferInfo.layers = 1;
-
-    pProgram->pFramebuffers = malloc(sizeof(VkFramebuffer) * VE_G_SwapchainImageCount);
-    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
-        framebufferAttachments[0] = VE_G_pSwapchainImageViews[i];
-        vkCreateFramebuffer(VE_G_Device, &framebufferInfo, NULL, &pProgram->pFramebuffers[i]);
-    }
 
     pProgram->pVertexPath = pVertexPath;
     pProgram->pFragmentPath = pFragmentPath;
@@ -106,23 +40,16 @@ static void VE_Render_CreateProgramAtLocation(VE_ProgramT *pProgram, const char 
 
 VE_ProgramT *VE_Render_CreateProgram(const char *pVertexPath, const char *pFragmentPath) {
     VE_G_ppPrograms[VE_G_ProgramCount] = malloc(sizeof(VE_ProgramT));
-    VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[VE_G_ProgramCount], pVertexPath, pFragmentPath);
+    VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[VE_G_ProgramCount], pVertexPath, pFragmentPath, 1);
     return VE_G_ppPrograms[VE_G_ProgramCount++];
 }
 
-static void VE_Render_DestroyProgramAtLocation(VE_ProgramT *pProgram) {
-    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i)
-        vkDestroyFramebuffer(VE_G_Device, pProgram->pFramebuffers[i], NULL);
-    free(pProgram->pFramebuffers);
+static void VE_Render_DestroyProgramAtLocation(VE_ProgramT *pProgram, char destroyLayout) {
     vkDestroyPipeline(VE_G_Device, pProgram->pipeline, NULL);
     vkDestroyPipelineLayout(VE_G_Device, pProgram->layout, NULL);
-    vkDestroyRenderPass(VE_G_Device, pProgram->renderPass, NULL);
-    vkDestroyDescriptorSetLayout(VE_G_Device, pProgram->descriptorSetLayout, NULL);
-    vkDestroyDescriptorPool(VE_G_Device, pProgram->descriptorPool, NULL);
-
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
-        vkDestroyBuffer(VE_G_Device, pProgram->pUniformBuffer[i], NULL);
-        vkFreeMemory(VE_G_Device, pProgram->pUniformBufferMemory[i], NULL);
+    if (destroyLayout) {
+        for (uint32_t i = 0; i < pProgram->descriptorSetLayoutCount; ++i)
+            vkDestroyDescriptorSetLayout(VE_G_Device, pProgram->pDescriptorSetLayouts[i], NULL);
     }
 }
 
@@ -138,7 +65,7 @@ void VE_Render_DestroyProgram(VE_ProgramT *pProgram) {
 
     vkDeviceWaitIdle(VE_G_Device);
 
-    VE_Render_DestroyProgramAtLocation(pProgram);
+    VE_Render_DestroyProgramAtLocation(pProgram, 1);
 
     free(pProgram);
 
@@ -151,7 +78,7 @@ void VE_Render_DestroyAllPrograms(char freeMemory) {
     vkDeviceWaitIdle(VE_G_Device);
 
     for (uint32_t i = 0; i < VE_G_ProgramCount; ++i) {
-        VE_Render_DestroyProgramAtLocation((VE_G_ppPrograms[i]));
+        VE_Render_DestroyProgramAtLocation((VE_G_ppPrograms[i]), freeMemory);
         if (freeMemory) free(VE_G_ppPrograms[i]);
     }
     VE_G_ProgramCount = 0;
@@ -161,46 +88,9 @@ void VE_Render_RecreateAllPrograms() {
     uint32_t programCount = VE_G_ProgramCount;
     VE_Render_DestroyAllPrograms(0);
     for (uint32_t i = 0; i < programCount; ++i) {
-        VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[i], VE_G_ppPrograms[i]->pVertexPath, VE_G_ppPrograms[i]->pFragmentPath);
+        VE_Render_CreateProgramAtLocation(VE_G_ppPrograms[i], VE_G_ppPrograms[i]->pVertexPath, VE_G_ppPrograms[i]->pFragmentPath, 0);
     }
     VE_G_ProgramCount = programCount;
-}
-
-void VE_Render_UpdateUniformBuffer(VE_ProgramT *pProgram) {
-    float time = SDL_GetTicks() / 1000.f;
-
-    VE_UniformBufferObjectT ubo = { 0 };
-    glm_mat4_identity(ubo.model);
-    glm_rotate(ubo.model, time * GLM_PI_2f, (vec3){0.f, 0.f, 1.f});
-    glm_lookat((vec3){2.f, 2.f, 2.f}, (vec3){0.f, 0.f, 0.f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(60.f), VE_G_SwapchainExtent.width / (float)VE_G_SwapchainExtent.height, 0.1f, 10.f, ubo.projection);
-    ubo.projection[1][1] *= -1;
-
-    void* data;
-    vkMapMemory(VE_G_Device, pProgram->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(VE_G_Device, pProgram->pUniformBufferMemory[VE_G_CurrentFrame]);
-}
-
-void VE_Render_SetProgramSampler(VE_ProgramT *pProgram, VE_TextureT *pTexture) {
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
-        VkDescriptorImageInfo imageInfo = { 0 };
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = pTexture->imageView;
-        imageInfo.sampler = pTexture->sampler;
-
-        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-        descriptorWrite.dstSet = pProgram->pDescriptorSets[i];
-        descriptorWrite.dstBinding = 1;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = NULL;
-        descriptorWrite.pImageInfo = &imageInfo;
-        descriptorWrite.pTexelBufferView = NULL;
-
-        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
-    }
 }
 
 void VE_Render_CreateProgramLayout(VE_ProgramT *pProgram, VE_ProgramSourceT *pProgramSource) {
@@ -230,6 +120,9 @@ void VE_Render_CreateProgramLayout(VE_ProgramT *pProgram, VE_ProgramSourceT *pPr
     uint32_t descriptorSetCount = max(pVertexDescriptorSets[vertexDescriptorSetCount - 1]->set, pFragmentDescriptorSets[fragmentDescriptorSetCount - 1]->set) + 1;
     uint32_t vertexSetIndex = 0;
     uint32_t fragmentSetIndex = 0;
+
+    pProgram->pDescriptorSetLayouts = malloc(sizeof(VkDescriptorSetLayout) * descriptorSetCount);
+    pProgram->descriptorSetLayoutCount = descriptorSetCount;
 
     for (uint32_t i = 0; i < descriptorSetCount; ++i) {
         VkDescriptorSetLayoutCreateInfo createInfo = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
@@ -282,7 +175,7 @@ void VE_Render_CreateProgramLayout(VE_ProgramT *pProgram, VE_ProgramSourceT *pPr
         createInfo.pBindings = pBindings;
         createInfo.bindingCount = bindingCount;
 
-        vkCreateDescriptorSetLayout(VE_G_Device, &createInfo, NULL, &pProgram->descriptorSetLayout); // TODO: Allow programs to have multiple descriptor sets
+        vkCreateDescriptorSetLayout(VE_G_Device, &createInfo, NULL, &pProgram->pDescriptorSetLayouts[i]);
 
         free((void*) createInfo.pBindings);
 
@@ -403,8 +296,8 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &pProgram->descriptorSetLayout;
+    pipelineLayoutInfo.setLayoutCount = pProgram->descriptorSetLayoutCount;
+    pipelineLayoutInfo.pSetLayouts = pProgram->pDescriptorSetLayouts;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = NULL;
 
@@ -433,7 +326,7 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = NULL;
     pipelineInfo.layout = pProgram->layout;
-    pipelineInfo.renderPass = pProgram->renderPass;
+    pipelineInfo.renderPass = VE_G_RenderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
@@ -444,61 +337,116 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
     vkDestroyShaderModule(VE_G_Device, fragmentShaderModule, NULL);
 }
 
-VkRenderPass VE_Render_CreateRenderpass() {
-    VkAttachmentDescription colorAttachment = { 0 };
-    colorAttachment.format = VE_G_SwapchainFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject) {
+    VE_UniformBufferObjectT ubo = { 0 };
+    glm_mat4_identity(ubo.model);
+    glm_quat_rotate(ubo.model, pMeshObject->transform.rotation, ubo.model);
+    glm_translate(ubo.model, pMeshObject->transform.position);
+    glm_scale(ubo.model, pMeshObject->transform.scale);
 
-    VkAttachmentDescription depthAttachment = { 0 };
-    depthAttachment.format = VE_G_DepthImageFormat;
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    glm_lookat((vec3){2.f, 2.f, 2.f}, (vec3){0.f, 0.f, 0.f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
+    glm_perspective(glm_rad(60.f), VE_G_SwapchainExtent.width / (float)VE_G_SwapchainExtent.height, 0.1f, 10.f, ubo.projection);
+    ubo.projection[1][1] *= -1;
 
-    VkAttachmentReference colorAttachmentRef = { 0 };
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    void* data;
+    vkMapMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[VE_G_CurrentFrame]);
+}
 
-    VkAttachmentReference depthAttachmentRef = { 0 };
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+void VE_Render_SetMeshObjectTexture(VE_MeshObject_T *pMeshObject, VE_TextureT *pTexture) {
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        VkDescriptorImageInfo imageInfo = { 0 };
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = pTexture->imageView;
+        imageInfo.sampler = pTexture->sampler;
 
-    VkSubpassDescription subpass = { 0 };
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+        descriptorWrite.dstSet = pMeshObject->pDescriptorSets[i];
+        descriptorWrite.dstBinding = 1;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = NULL;
+        descriptorWrite.pImageInfo = &imageInfo;
+        descriptorWrite.pTexelBufferView = NULL;
 
-    VkSubpassDependency dependency = { 0 };
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
+    }
+}
 
-    VkAttachmentDescription attachments[] = {colorAttachment, depthAttachment};
+VE_MeshObject_T *VE_Render_CreateMeshObject(VE_VertexT *vertices, uint32_t vertexCount, uint16_t *indices, uint32_t indexCount, VE_ProgramT *pProgram) {
+    VE_MeshObject_T *pMeshObject = malloc(sizeof(VE_MeshObject_T));
 
-    VkRenderPassCreateInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-    renderPassInfo.attachmentCount = sizeof(attachments) / sizeof(attachments[0]);
-    renderPassInfo.pAttachments = attachments;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
+    VkDeviceSize bufferSize = sizeof(VE_UniformBufferObjectT);
+    for (size_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; i++) {
+        VE_Render_CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                               &pMeshObject->pUniformBuffer[i], &pMeshObject->pUniformBufferMemory[i]);
+    }
 
-    VkRenderPass renderPass;
-    vkCreateRenderPass(VE_G_Device, &renderPassInfo, NULL, &renderPass);
+    pMeshObject->pVertexBuffer = VE_Render_CreateVertexBuffer(vertices, vertexCount);
+    pMeshObject->pIndexBuffer = VE_Render_CreateIndexBuffer(indices, indexCount);
+    pMeshObject->pProgram = pProgram;
 
-    return renderPass;
+    VkDescriptorPoolSize pPoolSizes[2] = { 0 };
+    pPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    pPoolSizes[0].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+    pPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pPoolSizes[1].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+    descriptorPoolCreateInfo.poolSizeCount = 2;
+    descriptorPoolCreateInfo.pPoolSizes = pPoolSizes;
+    descriptorPoolCreateInfo.maxSets = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+
+    vkCreateDescriptorPool(VE_G_Device, &descriptorPoolCreateInfo, NULL, &pMeshObject->descriptorPool);
+
+    VkDescriptorSetLayout pDescriptorSetLayouts[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i)
+        pDescriptorSetLayouts[i] = pProgram->pDescriptorSetLayouts[0];
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    descriptorSetAllocateInfo.descriptorPool = pMeshObject->descriptorPool;
+    descriptorSetAllocateInfo.descriptorSetCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
+    descriptorSetAllocateInfo.pSetLayouts = pDescriptorSetLayouts;
+
+    vkAllocateDescriptorSets(VE_G_Device, &descriptorSetAllocateInfo, pMeshObject->pDescriptorSets);
+
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        VkDescriptorBufferInfo bufferInfo = { 0 };
+        bufferInfo.buffer = pMeshObject->pUniformBuffer[i];
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(VE_UniformBufferObjectT);
+
+        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+        descriptorWrite.dstSet = pMeshObject->pDescriptorSets[i];
+        descriptorWrite.dstBinding = 0;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pImageInfo = NULL;
+        descriptorWrite.pTexelBufferView = NULL;
+
+        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
+    }
+
+    glm_vec3_zero(pMeshObject->transform.position);
+    glm_vec3_one(pMeshObject->transform.scale);
+    glm_quat_identity(pMeshObject->transform.rotation);
+
+    return pMeshObject;
+}
+
+void VE_Render_DestroyMeshObject(VE_MeshObject_T *pMeshObject) {
+    VE_Render_DestroyBuffer(pMeshObject->pVertexBuffer);
+    VE_Render_DestroyBuffer(pMeshObject->pIndexBuffer);
+
+    vkDestroyDescriptorPool(VE_G_Device, pMeshObject->descriptorPool, NULL);
+
+    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
+        vkDestroyBuffer(VE_G_Device, pMeshObject->pUniformBuffer[i], NULL);
+        vkFreeMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[i], NULL);
+    }
 }

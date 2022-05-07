@@ -8,6 +8,8 @@ void VE_Render_CreateSurface();
 void VE_Render_CreateSwapchain();
 void VE_Render_CreateCommandPool();
 void VE_Render_CreateSyncObjects();
+void VE_Render_CreateRenderpass();
+void VE_Render_CreateFramebuffers();
 
 #ifndef NDEBUG
 int VE_Render_CheckValidationSupport();

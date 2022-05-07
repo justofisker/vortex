@@ -31,6 +31,8 @@ extern VkImage VE_G_DepthImage;
 extern VkDeviceMemory VE_G_DepthImageMemory;
 extern VkImageView VE_G_DepthImageView;
 extern VkFormat VE_G_DepthImageFormat;
+extern VkRenderPass VE_G_RenderPass;
+extern VkFramebuffer *VE_G_pFramebuffers;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG
