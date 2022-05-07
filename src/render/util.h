@@ -4,10 +4,10 @@
 #include "types.h"
 
 #ifndef min
-#define min(x, y) (((x) > (y)) ? (x) : (y))
+#define min(x, y) (((x) < (y)) ? (x) : (y))
 #endif // min
 #ifndef max
-#define max(x, y) (((x) < (y)) ? (x) : (y))
+#define max(x, y) (((x) > (y)) ? (x) : (y))
 #endif //max
 
 char *VE_Util_ReadFile(const char *path, uint32_t *size);

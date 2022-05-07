@@ -53,4 +53,11 @@ typedef struct VE_LoadTextureOptionsT {
     uint32_t e;
 } VE_LoadTextureOptionsT;
 
+typedef struct VE_ProgramSourceT {
+    uint32_t *pVertexSource;
+    uint32_t vertexLength;
+    uint32_t *pFragmentSource;
+    uint32_t fragmentLength;
+} VE_ProgramSourceT;
+
 #endif //RENDER_TYPES_H
