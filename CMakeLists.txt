@@ -56,6 +56,8 @@ target_include_directories(vortex PRIVATE
         "extern/SDL2/include"
         "extern/stb"
         "extern/openal-soft/include"
+        "extern/ogg/include"
+        "extern/vorbis/include"
         volk_headers
         )
 
@@ -65,6 +67,9 @@ target_link_libraries(vortex PRIVATE
         volk
         cglm
         OpenAL
+        ogg
+        vorbis
+        vorbisfile
         )
 
 if (UNIX)
@@ -93,6 +98,9 @@ option(CGLM_STATIC "Static build" ON)
 option(CGLM_USE_C99 "" OFF)
 option(CGLM_USE_TEST "Enable Tests" OFF)
 add_subdirectory("extern/cglm/")
+
+add_subdirectory("extern/ogg")
+add_subdirectory("extern/vorbis")
 
 add_subdirectory("extern/openal-soft")
 

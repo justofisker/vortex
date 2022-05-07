@@ -3,5 +3,6 @@
 
 #include "AL/al.h"
 #include "AL/alc.h"
+#include <stdlib.h>
 
 #endif //AUDIO_TYPES_H

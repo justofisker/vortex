@@ -38,6 +38,8 @@ int main(int argc, char *argv[]) {
 
     VE_Audio_Init();
 
+    ALuint audio = VE_Audio_Load("music.ogg");
+
     VE_SetupBuiltinComponents();
 
     VE_EntityHandleT entHandle = VE_ECS_CreateEntity();

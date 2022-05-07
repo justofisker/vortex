@@ -10,3 +10,9 @@
 [submodule "extern/openal-soft"]
 	path = extern/openal-soft
 	url = https://github.com/kcat/openal-soft.git
+[submodule "extern/ogg"]
+	path = extern/ogg
+	url = https://github.com/xiph/ogg.git
+[submodule "extern/vorbis"]
+	path = extern/vorbis
+	url = https://github.com/xiph/vorbis.git
