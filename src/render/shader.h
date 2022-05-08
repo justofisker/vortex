@@ -7,10 +7,13 @@ VE_ProgramT *VE_Render_CreateProgram(const char *pVertexPath, const char *pFragm
 void VE_Render_DestroyProgram(VE_ProgramT *pProgram);
 void VE_Render_DestroyAllPrograms(char freeMemory);
 void VE_Render_RecreateAllPrograms();
-void VE_Render_UpdateUniformBuffer(VE_ProgramT *pProgram);
-void VE_Render_SetProgramSampler(VE_ProgramT *pProgram, VE_TextureT *pTexture);
 void VE_Render_CreateProgramLayout(VE_ProgramT *Program, VE_ProgramSourceT *pProgramSource);
 void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *pProgramSource);
-VkRenderPass VE_Render_CreateRenderpass();
+
+// Temporary to be removed
+VE_MeshObject_T *VE_Render_CreateMeshObject(VE_VertexT *vertices, uint32_t vertexCount, uint16_t *indices, uint32_t indexCount, VE_ProgramT *pProgram);
+void VE_Render_SetMeshObjectTexture(VE_MeshObject_T *pMeshObject, VE_TextureT *pTexture);
+void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject);
+void VE_Render_DestroyMeshObject(VE_MeshObject_T *pMeshObject);
 
 #endif //RENDER_SHADER_H

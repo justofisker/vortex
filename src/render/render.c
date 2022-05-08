@@ -26,6 +26,8 @@ void VE_Render_Init(SDL_Window *window) {
     VE_Render_CreateCommandPool();
     VE_Render_CreateSwapchain();
     VE_Render_CreateSyncObjects();
+    VE_Render_CreateRenderpass();
+    VE_Render_CreateFramebuffers();
 
     VkPhysicalDeviceProperties physicalDeviceProperties;
     vkGetPhysicalDeviceProperties(VE_G_PhysicalDevice, &physicalDeviceProperties);
@@ -38,6 +40,11 @@ void VE_Render_Destroy() {
     vkDeviceWaitIdle(VE_G_Device);
 
     VE_Render_DestroyAllPrograms(1);
+
+    for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i)
+        vkDestroyFramebuffer(VE_G_Device, VE_G_pFramebuffers[i], NULL);
+    free(VE_G_pFramebuffers);
+    vkDestroyRenderPass(VE_G_Device, VE_G_RenderPass, NULL);
     for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
         vkDestroySemaphore(VE_G_Device, VE_G_pImageAvailableSemaphores[i], NULL);
         vkDestroySemaphore(VE_G_Device, VE_G_pRenderFinishedSemaphores[i], NULL);
@@ -71,6 +78,7 @@ void VE_Render_Resize() {
     vkDestroyImageView(VE_G_Device, VE_G_DepthImageView, NULL);
     for (uint32_t i = 0; i < VE_G_SwapchainImageCount; ++i) {
         vkDestroyImageView(VE_G_Device, VE_G_pSwapchainImageViews[i], NULL);
+        vkDestroyFramebuffer(VE_G_Device, VE_G_pFramebuffers[i], NULL);
     }
     free(VE_G_pSwapchainImageViews);
     if (VE_G_pSwapchainImages)
@@ -78,6 +86,7 @@ void VE_Render_Resize() {
     vkDestroySwapchainKHR(VE_G_Device, VE_G_Swapchain, NULL);
     VE_Render_CreateSwapchain();
     VE_Render_RecreateAllPrograms();
+    VE_Render_CreateFramebuffers();
 }
 
 static uint32_t imageIndex = 0;
@@ -100,9 +109,20 @@ void VE_Render_BeginFrame() {
     beginInfo.pInheritanceInfo = NULL;
 
     vkBeginCommandBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame], &beginInfo);
+
+    VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+    renderPassInfo.renderPass = VE_G_RenderPass;
+    renderPassInfo.framebuffer = VE_G_pFramebuffers[imageIndex];
+    renderPassInfo.renderArea.offset = (VkOffset2D){0, 0};
+    renderPassInfo.renderArea.extent = VE_G_SwapchainExtent;
+    VkClearValue clearColor[2] = { {{{0.0f, 0.0f, 0.0f, 1.0f}}}, {1.0f, 0}};
+    renderPassInfo.clearValueCount = 2;
+    renderPassInfo.pClearValues = clearColor;
+    vkCmdBeginRenderPass(VE_G_pCommandBuffers[VE_G_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void VE_Render_EndFrame() {
+    vkCmdEndRenderPass(VE_G_pCommandBuffers[VE_G_CurrentFrame]);
     vkEndCommandBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame]);
 
     VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -136,25 +156,15 @@ void VE_Render_EndFrame() {
     VE_G_CurrentFrame = (VE_G_CurrentFrame + 1) % VE_RENDER_MAX_FRAMES_IN_FLIGHT;
 }
 
-void VE_Render_Draw(VE_ProgramT *pProgram, VE_BufferT *pVertexBuffer, VE_BufferT *pIndexBuffer) {
-    VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-    renderPassInfo.renderPass = pProgram->renderPass;
-    renderPassInfo.framebuffer = pProgram->pFramebuffers[imageIndex];
-    renderPassInfo.renderArea.offset = (VkOffset2D){0, 0};
-    renderPassInfo.renderArea.extent = VE_G_SwapchainExtent;
-    VkClearValue clearColor[2] = { {{{0.0f, 0.0f, 0.0f, 1.0f}}}, {1.0f, 0}};
-    renderPassInfo.clearValueCount = 2;
-    renderPassInfo.pClearValues = clearColor;
-    vkCmdBeginRenderPass(VE_G_pCommandBuffers[VE_G_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pProgram->pipeline);
+void VE_Render_Draw(VE_MeshObject_T *pMeshObject) {
+    vkCmdBindPipeline(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->pipeline);
 
     VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(VE_G_pCommandBuffers[VE_G_CurrentFrame], 0, 1, &pVertexBuffer->buffer, offsets);
-    vkCmdBindIndexBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame], pIndexBuffer->buffer, 0, VK_INDEX_TYPE_UINT16);
-    vkCmdBindDescriptorSets(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pProgram->layout, 0, 1, &pProgram->pDescriptorSets[VE_G_CurrentFrame], 0, NULL);
+    vkCmdBindVertexBuffers(VE_G_pCommandBuffers[VE_G_CurrentFrame], 0, 1, &pMeshObject->pVertexBuffer->buffer, offsets);
+    vkCmdBindIndexBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame], pMeshObject->pIndexBuffer->buffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindDescriptorSets(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->layout, 0, 1, &pMeshObject->pDescriptorSets[VE_G_CurrentFrame], 0, NULL);
 
-    vkCmdDrawIndexed(VE_G_pCommandBuffers[VE_G_CurrentFrame], pIndexBuffer->instanceCount, 1, 0, 0, 0);
-    vkCmdEndRenderPass(VE_G_pCommandBuffers[VE_G_CurrentFrame]);
+    vkCmdDrawIndexed(VE_G_pCommandBuffers[VE_G_CurrentFrame], pMeshObject->pIndexBuffer->instanceCount, 1, 0, 0, 0);
 }
 
 VE_BufferT *VE_Render_CreateVertexBuffer(VE_VertexT *vertices, uint32_t count) {

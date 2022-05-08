@@ -28,6 +28,8 @@ VkImage VE_G_DepthImage = VK_NULL_HANDLE;
 VkDeviceMemory VE_G_DepthImageMemory = VK_NULL_HANDLE;
 VkImageView VE_G_DepthImageView = VK_NULL_HANDLE;
 VkFormat VE_G_DepthImageFormat = VK_FORMAT_MAX_ENUM;
+VkRenderPass VE_G_RenderPass = VK_NULL_HANDLE;
+VkFramebuffer *VE_G_pFramebuffers = NULL;
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG
