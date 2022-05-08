@@ -9,9 +9,6 @@ void VE_Render_Destroy();
 void VE_Render_BeginFrame();
 void VE_Render_EndFrame();
 void VE_Render_Draw(VE_MeshObject_T *pMeshObject);
-VE_BufferT *VE_Render_CreateVertexBuffer(VE_VertexT *vertices, uint32_t count);
-VE_BufferT *VE_Render_CreateIndexBuffer(uint16_t *indices, uint32_t count);
-void VE_Render_DestroyBuffer(VE_BufferT *pBuffer);
 
 void VE_Render_Resize();
 

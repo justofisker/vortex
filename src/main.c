@@ -3,6 +3,9 @@
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
+#include "render/mesh.h"
+
+#include <cglm/cglm.h>
 
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
@@ -12,24 +15,11 @@ int main(int argc, char *argv[]) {
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
     VE_TextureT *pTexture = VE_Render_LoadTexture("texture.jpg", NULL);
 
-    VE_VertexT vertices[] = {
-            {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-            {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-            {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-            {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    };
-
-    uint16_t indices[] = {
-            0, 1, 2, 2, 3, 0
-    };
-
-    VE_MeshObject_T *pPlaneMesh = VE_Render_CreateMeshObject(vertices, sizeof(vertices) / sizeof(vertices[0]), indices, sizeof(indices) / sizeof(indices[0]), pTriangleProgram);
+    VE_MeshObject_T *pPlaneMesh = VE_Render_CreatePlaneMesh(1.0f, 1.0f, pTriangleProgram);
     VE_Render_SetMeshObjectTexture(pPlaneMesh, pTexture);
-    VE_MeshObject_T *pPlaneMesh2 = VE_Render_CreateMeshObject(vertices, sizeof(vertices) / sizeof(vertices[0]), indices, sizeof(indices) / sizeof(indices[0]), pTriangleProgram);
-    VE_Render_SetMeshObjectTexture(pPlaneMesh2, pTexture);
-    pPlaneMesh2->transform.position[2] = -1.0f;
-    VE_Render_UpdateMeshUniformBuffer(pPlaneMesh2);
-
+    VE_MeshObject_T *pCylinderMesh = VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram);
+    VE_Render_SetMeshObjectTexture(pCylinderMesh, pTexture);
+    pCylinderMesh->transform.position[2] = -1.0f;
 
     char running = 1;
     char minimized = 0;
@@ -45,7 +35,7 @@ int main(int argc, char *argv[]) {
                         case SDL_WINDOWEVENT_RESIZED:
                             VE_Render_Resize();
                             VE_Render_SetMeshObjectTexture(pPlaneMesh, pTexture);
-                            VE_Render_SetMeshObjectTexture(pPlaneMesh2, pTexture);
+                            VE_Render_SetMeshObjectTexture(pCylinderMesh, pTexture);
                             break;
                         case SDL_WINDOWEVENT_MINIMIZED:
                             minimized = 1;
@@ -61,16 +51,17 @@ int main(int argc, char *argv[]) {
 
         pPlaneMesh->transform.position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
         VE_Render_UpdateMeshUniformBuffer(pPlaneMesh);
-        VE_Render_UpdateMeshUniformBuffer(pPlaneMesh2); // TODO need this for now will be fixed when adding ecs
+        glm_quatv(pCylinderMesh->transform.rotation, SDL_GetTicks() / 1000.0f, (vec3){0.0f, 0.0f, 1.0f});
+        VE_Render_UpdateMeshUniformBuffer(pCylinderMesh);
 
         VE_Render_BeginFrame();
-        VE_Render_Draw(pPlaneMesh2);
+        VE_Render_Draw(pCylinderMesh);
         VE_Render_Draw(pPlaneMesh);
         VE_Render_EndFrame();
     }
 
     VE_Render_DestroyTexture(pTexture);
-    VE_Render_DestroyMeshObject(pPlaneMesh2);
+    VE_Render_DestroyMeshObject(pCylinderMesh);
     VE_Render_DestroyMeshObject(pPlaneMesh);
     VE_Render_DestroyProgram(pTriangleProgram);
     VE_Render_Destroy();

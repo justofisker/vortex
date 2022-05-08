@@ -37,6 +37,8 @@ add_executable(vortex
         "src/render/util.h"
         "src/render/texture.c"
         "src/render/texture.h"
+        "src/render/mesh.c"
+        "src/render/mesh.h"
         ${SHADERS}
         )
 

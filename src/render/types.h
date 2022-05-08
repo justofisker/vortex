@@ -20,8 +20,9 @@ typedef struct VE_ProgramT {
 } VE_ProgramT;
 
 typedef struct VE_VertexT {
-    vec3 pos;
+    vec3 position;
     vec3 color;
+    vec3 normal;
     vec2 texCoord;
 } VE_VertexT;
 
