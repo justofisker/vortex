@@ -340,4 +340,3 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
     vkDestroyShaderModule(VE_G_Device, vertexShaderModule, NULL);
     vkDestroyShaderModule(VE_G_Device, fragmentShaderModule, NULL);
 }
-

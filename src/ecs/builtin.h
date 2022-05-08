@@ -3,9 +3,8 @@
 
 #include "types.h"
 #include "../audio/audio.h"
-#include "cglm/cglm.h"
-#include "cglm/mat4.h"
-#include "cglm/euler.h"
+#include <cglm/types.h>
+#include "../render/types.h"
 
 typedef struct VE_TestComponent {
 	uint32_t _id;
@@ -31,6 +30,15 @@ typedef struct VE_Transform {
 } VE_Transform;
 extern uint32_t VE_TransformID;
 VE_Transform *VE_NewTransform(vec3 position, vec3 rotation, vec3 scale);
+
+typedef struct VE_Mesh {
+    uint32_t _id;
+    VE_MeshObject_T *pMeshObject;
+} VE_Mesh;
+extern uint32_t VE_MeshID;
+VE_Mesh *VE_NewMesh(VE_MeshObject_T* pMeshObject);
+void VE_Mesh_DeleteSystem(void *pData);
+void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData);
 
 typedef struct VE_SoundPlayer {
 	uint32_t id;

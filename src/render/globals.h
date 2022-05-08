@@ -2,6 +2,7 @@
 #define RENDER_GLOBALS_H
 
 #include "types.h"
+#include "../ecs/types.h"
 
 extern SDL_Window *VE_G_Window;
 extern VkInstance VE_G_Instance;
@@ -33,6 +34,8 @@ extern VkImageView VE_G_DepthImageView;
 extern VkFormat VE_G_DepthImageFormat;
 extern VkRenderPass VE_G_RenderPass;
 extern VkFramebuffer *VE_G_pFramebuffers;
+extern uint32_t VE_G_MeshEntityCount;
+extern VE_MeshObject_T *VE_G_pMeshEntities[256];
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG

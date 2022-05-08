@@ -8,6 +8,8 @@
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include "../ecs/ecs.h"
+#include "../ecs/builtin.h"
 
 void VE_Render_Init(SDL_Window *window) {
     VE_G_Window = window;
@@ -31,9 +33,9 @@ void VE_Render_Init(SDL_Window *window) {
 
     VkPhysicalDeviceProperties physicalDeviceProperties;
     vkGetPhysicalDeviceProperties(VE_G_PhysicalDevice, &physicalDeviceProperties);
-    printf("%s (Vulkan %d.%d.%d)\n", physicalDeviceProperties.deviceName, VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion),
-           VK_VERSION_MINOR(physicalDeviceProperties.apiVersion),
-           VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+    printf("%s (Vulkan %d.%d.%d)\n", physicalDeviceProperties.deviceName, VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion),
+           VK_API_VERSION_MINOR(physicalDeviceProperties.apiVersion),
+           VK_API_VERSION_PATCH(physicalDeviceProperties.apiVersion));
 }
 
 void VE_Render_Destroy() {
@@ -165,4 +167,26 @@ void VE_Render_Draw(VE_MeshObject_T *pMeshObject) {
     vkCmdBindDescriptorSets(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->layout, 0, 1, &pMeshObject->pDescriptorSets[VE_G_CurrentFrame], 0, NULL);
 
     vkCmdDrawIndexed(VE_G_pCommandBuffers[VE_G_CurrentFrame], pMeshObject->pIndexBuffer->instanceCount, 1, 0, 0, 0);
+}
+
+void VE_Render_RenderScene() {
+    VE_Render_BeginFrame();
+    for (uint32_t i = 0; i < VE_G_MeshEntityCount; ++i) {
+        VE_Render_Draw(VE_G_pMeshEntities[i]);
+    }
+    VE_Render_EndFrame();
+}
+
+void VE_Render_RegisterEntity(VE_MeshObject_T *pMeshObject) {
+    VE_G_pMeshEntities[VE_G_MeshEntityCount++] = pMeshObject;
+}
+
+void VE_Render_UnregisterEntity(VE_MeshObject_T *pMeshObject) {
+    for (uint32_t i = 0; i < VE_G_MeshEntityCount; ++i) {
+        if (VE_G_pMeshEntities[i] == pMeshObject) {
+            if (--VE_G_MeshEntityCount && i != VE_G_MeshEntityCount) {
+                VE_G_pMeshEntities[i] = VE_G_pMeshEntities[VE_G_MeshEntityCount];
+            }
+        }
+    }
 }

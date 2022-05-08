@@ -30,6 +30,8 @@ VkImageView VE_G_DepthImageView = VK_NULL_HANDLE;
 VkFormat VE_G_DepthImageFormat = VK_FORMAT_MAX_ENUM;
 VkRenderPass VE_G_RenderPass = VK_NULL_HANDLE;
 VkFramebuffer *VE_G_pFramebuffers = NULL;
+uint32_t VE_G_MeshEntityCount = 0;
+VE_MeshObject_T *VE_G_pMeshEntities[256] = { NULL };
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG
