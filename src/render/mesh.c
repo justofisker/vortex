@@ -16,7 +16,7 @@ VE_MeshObject_T *VE_Render_CreateCylinderMesh(int vertex_count, float radius, fl
     VE_VertexT *pVertices = malloc(sizeof(VE_VertexT) * nVertices);
 
     uint32_t i;
-    for (i = 0; i < nVertices * 4 + 6; ++i) {
+    for (i = 0; i < nVertices; ++i) {
         pVertices[i].color[0] = 1.0f;
         pVertices[i].color[1] = 1.0f;
         pVertices[i].color[2] = 1.0f;
