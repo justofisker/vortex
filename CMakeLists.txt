@@ -47,6 +47,8 @@ add_executable(vortex
         "src/audio/audio.h"
         "src/audio/globals.c"
         "src/audio/globals.h"
+        "src/render/mesh.c"
+        "src/render/mesh.h"
         ${SHADERS}
         )
 

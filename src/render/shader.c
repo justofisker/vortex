@@ -212,24 +212,28 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
     bindingDescription.stride = sizeof(VE_VertexT);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkVertexInputAttributeDescription pAttributeDescriptions[3] = { 0 };
+    VkVertexInputAttributeDescription pAttributeDescriptions[4] = { 0 };
     pAttributeDescriptions[0].binding = 0;
     pAttributeDescriptions[0].location = 0;
     pAttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    pAttributeDescriptions[0].offset = offsetof(VE_VertexT, pos);
+    pAttributeDescriptions[0].offset = offsetof(VE_VertexT, position);
     pAttributeDescriptions[1].binding = 0;
     pAttributeDescriptions[1].location = 1;
     pAttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     pAttributeDescriptions[1].offset = offsetof(VE_VertexT, color);
     pAttributeDescriptions[2].binding = 0;
     pAttributeDescriptions[2].location = 2;
-    pAttributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    pAttributeDescriptions[2].offset = offsetof(VE_VertexT, texCoord);
+    pAttributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+    pAttributeDescriptions[2].offset = offsetof(VE_VertexT, normal);
+    pAttributeDescriptions[3].binding = 0;
+    pAttributeDescriptions[3].location = 3;
+    pAttributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
+    pAttributeDescriptions[3].offset = offsetof(VE_VertexT, texCoord);
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = 3;
+    vertexInputInfo.vertexAttributeDescriptionCount = sizeof(pAttributeDescriptions) / sizeof(pAttributeDescriptions[0]);
     vertexInputInfo.pVertexAttributeDescriptions = pAttributeDescriptions;
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
@@ -337,116 +341,3 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
     vkDestroyShaderModule(VE_G_Device, fragmentShaderModule, NULL);
 }
 
-void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject) {
-    VE_UniformBufferObjectT ubo = { 0 };
-    glm_mat4_identity(ubo.model);
-    glm_quat_rotate(ubo.model, pMeshObject->transform.rotation, ubo.model);
-    glm_translate(ubo.model, pMeshObject->transform.position);
-    glm_scale(ubo.model, pMeshObject->transform.scale);
-
-    glm_lookat((vec3){2.f, 2.f, 2.f}, (vec3){0.f, 0.f, 0.f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(60.f), VE_G_SwapchainExtent.width / (float)VE_G_SwapchainExtent.height, 0.1f, 10.f, ubo.projection);
-    ubo.projection[1][1] *= -1;
-
-    void* data;
-    vkMapMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[VE_G_CurrentFrame]);
-}
-
-void VE_Render_SetMeshObjectTexture(VE_MeshObject_T *pMeshObject, VE_TextureT *pTexture) {
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
-        VkDescriptorImageInfo imageInfo = { 0 };
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = pTexture->imageView;
-        imageInfo.sampler = pTexture->sampler;
-
-        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-        descriptorWrite.dstSet = pMeshObject->pDescriptorSets[i];
-        descriptorWrite.dstBinding = 1;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = NULL;
-        descriptorWrite.pImageInfo = &imageInfo;
-        descriptorWrite.pTexelBufferView = NULL;
-
-        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
-    }
-}
-
-VE_MeshObject_T *VE_Render_CreateMeshObject(VE_VertexT *vertices, uint32_t vertexCount, uint16_t *indices, uint32_t indexCount, VE_ProgramT *pProgram) {
-    VE_MeshObject_T *pMeshObject = malloc(sizeof(VE_MeshObject_T));
-
-    VkDeviceSize bufferSize = sizeof(VE_UniformBufferObjectT);
-    for (size_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; i++) {
-        VE_Render_CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                               &pMeshObject->pUniformBuffer[i], &pMeshObject->pUniformBufferMemory[i]);
-    }
-
-    pMeshObject->pVertexBuffer = VE_Render_CreateVertexBuffer(vertices, vertexCount);
-    pMeshObject->pIndexBuffer = VE_Render_CreateIndexBuffer(indices, indexCount);
-    pMeshObject->pProgram = pProgram;
-
-    VkDescriptorPoolSize pPoolSizes[2] = { 0 };
-    pPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    pPoolSizes[0].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-    pPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pPoolSizes[1].descriptorCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-    descriptorPoolCreateInfo.poolSizeCount = 2;
-    descriptorPoolCreateInfo.pPoolSizes = pPoolSizes;
-    descriptorPoolCreateInfo.maxSets = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-
-    vkCreateDescriptorPool(VE_G_Device, &descriptorPoolCreateInfo, NULL, &pMeshObject->descriptorPool);
-
-    VkDescriptorSetLayout pDescriptorSetLayouts[VE_RENDER_MAX_FRAMES_IN_FLIGHT];
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i)
-        pDescriptorSetLayouts[i] = pProgram->pDescriptorSetLayouts[0];
-
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-    descriptorSetAllocateInfo.descriptorPool = pMeshObject->descriptorPool;
-    descriptorSetAllocateInfo.descriptorSetCount = VE_RENDER_MAX_FRAMES_IN_FLIGHT;
-    descriptorSetAllocateInfo.pSetLayouts = pDescriptorSetLayouts;
-
-    vkAllocateDescriptorSets(VE_G_Device, &descriptorSetAllocateInfo, pMeshObject->pDescriptorSets);
-
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
-        VkDescriptorBufferInfo bufferInfo = { 0 };
-        bufferInfo.buffer = pMeshObject->pUniformBuffer[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(VE_UniformBufferObjectT);
-
-        VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-        descriptorWrite.dstSet = pMeshObject->pDescriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = NULL;
-        descriptorWrite.pTexelBufferView = NULL;
-
-        vkUpdateDescriptorSets(VE_G_Device, 1, &descriptorWrite, 0, NULL);
-    }
-
-    glm_vec3_zero(pMeshObject->transform.position);
-    glm_vec3_one(pMeshObject->transform.scale);
-    glm_quat_identity(pMeshObject->transform.rotation);
-
-    return pMeshObject;
-}
-
-void VE_Render_DestroyMeshObject(VE_MeshObject_T *pMeshObject) {
-    VE_Render_DestroyBuffer(pMeshObject->pVertexBuffer);
-    VE_Render_DestroyBuffer(pMeshObject->pIndexBuffer);
-
-    vkDestroyDescriptorPool(VE_G_Device, pMeshObject->descriptorPool, NULL);
-
-    for (uint32_t i = 0; i < VE_RENDER_MAX_FRAMES_IN_FLIGHT; ++i) {
-        vkDestroyBuffer(VE_G_Device, pMeshObject->pUniformBuffer[i], NULL);
-        vkFreeMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[i], NULL);
-    }
-}
