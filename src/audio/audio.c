@@ -14,6 +14,8 @@ int VE_Audio_Init() {
 
 	alcMakeContextCurrent(VE_G_pAudioContext);
 
+	alListener3f(AL_POSITION, 0.0, 0.0, 0.0);
+
 	return 0;
 }
 

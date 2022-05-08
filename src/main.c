@@ -45,7 +45,10 @@ int main(int argc, char *argv[]) {
     VE_EntityHandleT entHandle = VE_ECS_CreateEntity();
 
     VE_ECS_InsertComponent(entHandle, VE_NewTestComponentSpawner());
-    VE_ECS_InsertComponent(entHandle, VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f }));
+    VE_ECS_InsertComponent(entHandle, VE_NewTransform((vec3) { 1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f }));
+    VE_ECS_InsertComponent(entHandle, VE_NewSoundPlayer(audio, 1.0, 1.0, 1));
+
+    VE_PlaySoundPlayer(VE_ECS_GetComponent(entHandle, VE_SoundPlayerID));
 
     char running = 1;
     char minimized = 0;

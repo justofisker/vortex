@@ -4,6 +4,7 @@
 uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
 uint32_t VE_TransformID = 0;
+uint32_t VE_SoundPlayerID = 0;
 
 void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_TestComponent* component = (VE_TestComponent *)pData;
@@ -73,14 +74,16 @@ void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	else {
 		alSourcei(soundPlayer->source, AL_SOURCE_RELATIVE, AL_TRUE);
 	}
+	
 }
 
 void VE_SoundPlayer_DestroySystem(void *pData) {
 	VE_SoundPlayer *soundPlayer = pData;
-	alDeleteSources(1, &soundPlayer->source);
+	VE_Audio_DestroySource(&soundPlayer->source);
 }
 
-VE_SoundPlayer *VE_NewSoundPlayer(ALuint source, float volume, float pitch, char looping) {
+VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping) {
+	ALuint source = VE_Audio_CreateSource(sound);
 	VE_SoundPlayer *pComponent = malloc(sizeof(VE_SoundPlayer));
 	*pComponent = (VE_SoundPlayer){VE_SoundPlayerID, source, volume, pitch, looping};
 	return pComponent;
@@ -90,6 +93,7 @@ void VE_PlaySoundPlayer(VE_SoundPlayer *soundPlayer) {
 	alSourcef(soundPlayer->source, AL_PITCH, soundPlayer->pitch);
 	alSourcef(soundPlayer->source, AL_GAIN, soundPlayer->volume);
 	alSourcei(soundPlayer->source, AL_LOOPING, soundPlayer->looping);
+	VE_Audio_Play(soundPlayer->source);
 }
 
 void VE_SetupBuiltinComponents() {

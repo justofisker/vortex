@@ -40,7 +40,7 @@ typedef struct VE_SoundPlayer {
 	char looping;
 } VE_SoundPlayer;
 extern uint32_t VE_SoundPlayerID;
-VE_SoundPlayer *VE_NewSoundPlayer(ALuint source, float volume, float pitch, char looping);
+VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping);
 void VE_PlaySoundPlayer(VE_SoundPlayer *soundPlayer);
 
 void VE_SetupBuiltinComponents();
