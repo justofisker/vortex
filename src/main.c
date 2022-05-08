@@ -23,10 +23,6 @@ int main(int argc, char *argv[]) {
     VE_MeshObject_T *pCylinderMesh = VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram);
     VE_Render_SetMeshObjectTexture(pCylinderMesh, pTexture);
     pCylinderMesh->transform.position[2] = -1.0f;
-    VE_MeshObject_T *pPlaneMesh2 = VE_Render_CreateMeshObject(vertices, sizeof(vertices) / sizeof(vertices[0]), indices, sizeof(indices) / sizeof(indices[0]), pTriangleProgram);
-    VE_Render_SetMeshObjectTexture(pPlaneMesh2, pTexture);
-    pPlaneMesh2->transform.position[2] = -1.0f;
-    VE_Render_UpdateMeshUniformBuffer(pPlaneMesh2);
 
 
     VE_Audio_Init();
