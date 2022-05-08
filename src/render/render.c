@@ -31,9 +31,9 @@ void VE_Render_Init(SDL_Window *window) {
 
     VkPhysicalDeviceProperties physicalDeviceProperties;
     vkGetPhysicalDeviceProperties(VE_G_PhysicalDevice, &physicalDeviceProperties);
-    printf("%s (Vulkan %d.%d.%d)\n", physicalDeviceProperties.deviceName, VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion),
-           VK_VERSION_MINOR(physicalDeviceProperties.apiVersion),
-           VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+    printf("%s (Vulkan %d.%d.%d)\n", physicalDeviceProperties.deviceName, VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion),
+           VK_API_VERSION_MINOR(physicalDeviceProperties.apiVersion),
+           VK_API_VERSION_PATCH(physicalDeviceProperties.apiVersion));
 }
 
 void VE_Render_Destroy() {
