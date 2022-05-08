@@ -1,5 +1,6 @@
 #include "audio.h"
 #include "vorbis/vorbisfile.h"
+#include <string.h>
 
 int VE_Audio_Init() {
 	VE_G_pAudioDevice = alcOpenDevice(0);
