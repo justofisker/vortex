@@ -37,6 +37,16 @@ add_executable(vortex
         "src/render/util.h"
         "src/render/texture.c"
         "src/render/texture.h"
+        "src/ecs/ecs.c"
+        "src/ecs/ecs.h"
+        "src/ecs/globals.c"
+        "src/ecs/globals.h"
+        "src/ecs/builtin.c"
+        "src/ecs/builtin.h"
+        "src/audio/audio.c"
+        "src/audio/audio.h"
+        "src/audio/globals.c"
+        "src/audio/globals.h"
         "src/render/mesh.c"
         "src/render/mesh.h"
         ${SHADERS}
@@ -47,6 +57,9 @@ add_dependencies(vortex shaders)
 target_include_directories(vortex PRIVATE
         "extern/SDL2/include"
         "extern/stb"
+        "extern/openal-soft/include"
+        "extern/ogg/include"
+        "extern/vorbis/include"
         volk_headers
         )
 
@@ -56,6 +69,10 @@ target_link_libraries(vortex PRIVATE
         volk
         cglm
         spirv-reflect-static
+        OpenAL
+        ogg
+        vorbis
+        vorbisfile
         )
 
 if (UNIX)
@@ -76,6 +93,7 @@ add_subdirectory("extern/volk")
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 option(BUILD_SHARED_LIBS "" ON)
+
 add_subdirectory("extern/SDL2")
 
 option(CGLM_SHARED "Shared build" OFF)
@@ -88,6 +106,11 @@ option(SPIRV_REFLECT_EXECUTABLE     "Build spirv-reflect executable" OFF)
 option(SPIRV_REFLECT_EXAMPLES       "Build stripper examples" OFF)
 option(SPIRV_REFLECT_STATIC_LIB     "Build a SPIRV-Reflect static library" ON)
 add_subdirectory("extern/SPIRV-Reflect")
+
+add_subdirectory("extern/ogg")
+add_subdirectory("extern/vorbis")
+
+add_subdirectory("extern/openal-soft")
 
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)
