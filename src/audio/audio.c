@@ -4,12 +4,12 @@
 int VE_Audio_Init() {
 	VE_G_pAudioDevice = alcOpenDevice(0);
 	if (!VE_G_pAudioDevice) {
-		printf("Failed to open audio device. Error: %s\n", alGetError());
+		printf("Failed to open audio device.");
 	}
 
 	VE_G_pAudioContext = alcCreateContext(VE_G_pAudioDevice, 0);
 	if (!VE_G_pAudioContext) {
-		printf("Failed to open audio device. Error: %s\n", alGetError());
+		printf("Failed to create audio context.");
 	}
 
 	alcMakeContextCurrent(VE_G_pAudioContext);
@@ -26,8 +26,6 @@ void VE_Audio_Destroy() {
 ALuint VE_Load_Ogg(const char *pFileName) {
 	ALuint buffer;
 
-	//FILE *fp = fopen(&pFileName, "rb");
-
 	alGenBuffers(1, &buffer);
 	OggVorbis_File vf;
 
@@ -36,12 +34,6 @@ ALuint VE_Load_Ogg(const char *pFileName) {
 	if ((error = ov_fopen(pFileName, &vf)) != 0) {
 		printf("Failed to open OGG file. Error: %i\n", error);
 	}
-
-	/*if (ov_open_callbacks(fp, &vf, NULL, 0, OV_CALLBACKS_NOCLOSE) < 0) {
-		printf("Attempted to load a non-vorbis OGG file.\n");
-		alDeleteBuffers(1, &buffer);
-		return 0;
-	}*/
 
 	vorbis_info *vi = ov_info(&vf, -1);
 
@@ -70,7 +62,6 @@ ALuint VE_Load_Ogg(const char *pFileName) {
 
 	free(pcmout);
 	ov_clear(&vf);
-	//fclose(fp);
 
 	return buffer;
 }
@@ -94,7 +85,13 @@ ALuint VE_Audio_CreateSource(ALuint sound) {
 	ALuint source = 0;
 	alGenSources(1, &source);
 	alSourcei(source, AL_BUFFER, sound);
+	return source;
+}
+
+void VE_Audio_DestroySource(ALuint source) {
+	alDeleteSources(1, &source);
 }
 
 void VE_Audio_Play(ALuint source) {
+	alSourcePlay(source);
 }

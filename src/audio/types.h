@@ -5,4 +5,8 @@
 #include "AL/alc.h"
 #include <stdlib.h>
 
+typedef struct VE_AudioT {
+	ALuint audio;
+} VE_AudioT;
+
 #endif //AUDIO_TYPES_H

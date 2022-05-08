@@ -38,16 +38,16 @@ int main(int argc, char *argv[]) {
 
     VE_Audio_Init();
 
-    ALuint audio = VE_Audio_Load("music.ogg");
+    ALuint audio = VE_Audio_LoadSound("music.ogg");
+
+    ALuint source = VE_Audio_CreateSource(audio);
 
     VE_SetupBuiltinComponents();
 
     VE_EntityHandleT entHandle = VE_ECS_CreateEntity();
 
-    VE_TestComponentSpawner testComponentSpawner = VE_NewTestComponentSpawner();
-    VE_ECS_InsertComponent(entHandle, &testComponentSpawner);
-    VE_Transform transform = VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f });
-    VE_ECS_InsertComponent(entHandle, &transform); 
+    VE_ECS_InsertComponent(entHandle, VE_NewTestComponentSpawner());
+    VE_ECS_InsertComponent(entHandle, VE_NewTransform((vec3) { 0.0f, 1.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f }));
 
     char running = 1;
     char minimized = 0;
