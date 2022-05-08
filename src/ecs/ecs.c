@@ -80,6 +80,7 @@ void VE_ECS_DestroyEntity(VE_EntityHandleT entityHandle) {
 		if (destroySystem) {
 			destroySystem(pComponent);
 		}
+        offset += VE_G_ComponentSizes[id];
 	}
 	free(VE_G_CurrentScene.pEntities[entityHandle].pComponents);
 	VE_G_CurrentScene.pEntities[entityHandle].pComponents = NULL;

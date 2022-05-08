@@ -66,7 +66,6 @@ typedef struct VE_MeshObject_T {
     VE_BufferT *pVertexBuffer;
     VE_BufferT *pIndexBuffer;
     VE_ProgramT *pProgram;
-    VE_Transform_T transform;
 
     VkDescriptorPool descriptorPool;
     VkDescriptorSet pDescriptorSets[VE_RENDER_MAX_FRAMES_IN_FLIGHT];

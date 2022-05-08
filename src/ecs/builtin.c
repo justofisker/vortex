@@ -1,10 +1,14 @@
 #include "builtin.h"
 #include "ecs.h"
+#include "../render/mesh.h"
+#include "../render/render.h"
+#include <cglm/cglm.h>
 
 uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
 uint32_t VE_TransformID = 0;
 uint32_t VE_SoundPlayerID = 0;
+uint32_t VE_MeshID = 0;
 
 void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_TestComponent* component = (VE_TestComponent *)pData;
@@ -41,12 +45,13 @@ VE_TestComponentSpawner *VE_NewTestComponentSpawner() {
 void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_Transform *transform = (VE_Transform *)pData;
 	if (transform->_update) {
-		mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
+        mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
 		glm_translate(transform_mat, transform->position);
-		glm_rotate(transform_mat, glm_rad(transform->rotation[0]), GLM_XUP);
-		glm_rotate(transform_mat, glm_rad(transform->rotation[1]), GLM_YUP);
-		glm_rotate(transform_mat, glm_rad(transform->rotation[2]), GLM_ZUP);
+		glm_rotate(transform_mat, transform->rotation[0], GLM_XUP);
+		glm_rotate(transform_mat, transform->rotation[1], GLM_YUP);
+		glm_rotate(transform_mat, transform->rotation[2], GLM_ZUP);
 		glm_scale(transform_mat, transform->scale);
+        //glm_mat4_copy(transform_mat, transform->_matrix); // TODO figure out why this causes SIGSEGV
 		transform->_update = 0;
 	}
 }
@@ -62,6 +67,33 @@ VE_Transform *VE_NewTransform(vec3 position, vec3 rotation, vec3 scale) {
 		GLM_MAT4_IDENTITY_INIT
 	};
 	return pComponent;
+}
+
+void VE_Mesh_DeleteSystem(void *pData) {
+    VE_Mesh *pMesh = pData;
+    VE_Render_UnregisterEntity(pMesh->pMeshObject);
+    VE_Render_DestroyMeshObject(pMesh->pMeshObject);
+}
+
+void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
+    VE_Mesh *pMesh = pData;
+    VE_Transform *transform = (VE_Transform*) VE_ECS_GetComponent(entityHandle, VE_TransformID);
+    if (transform) {
+        mat4 newMatrix = GLM_MAT4_IDENTITY_INIT;
+        glm_translate(newMatrix, transform->position);
+        glm_rotate(newMatrix, transform->rotation[0], GLM_XUP);
+        glm_rotate(newMatrix, transform->rotation[1], GLM_YUP);
+        glm_rotate(newMatrix, transform->rotation[2], GLM_ZUP);
+        glm_scale(newMatrix, transform->scale);
+        VE_Render_UpdateMeshUniformBuffer(pMesh->pMeshObject, newMatrix);
+    }
+}
+
+VE_Mesh *VE_NewMesh(VE_MeshObject_T *pMeshObject) {
+    VE_Mesh *pComponent = malloc(sizeof(VE_Mesh));
+    *pComponent = (VE_Mesh){ VE_MeshID, pMeshObject };
+    VE_Render_RegisterEntity(pMeshObject);
+    return pComponent;
 }
 
 void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
@@ -101,4 +133,5 @@ void VE_SetupBuiltinComponents() {
 	VE_TestComponentSpawnerID = VE_ECS_RegisterComponent("TestComponentSpawner", sizeof(VE_TestComponentSpawner), VE_TestComponentSpawner_UpdateSystem, NULL);
 	VE_TransformID = VE_ECS_RegisterComponent("Transform", sizeof(VE_Transform), VE_Transform_UpdateSystem, NULL);
 	VE_SoundPlayerID = VE_ECS_RegisterComponent("SoundPlayer", sizeof(VE_SoundPlayer), VE_SoundPlayer_UpdateSystem, VE_SoundPlayer_DestroySystem);
+    VE_MeshID = VE_ECS_RegisterComponent("Mesh", sizeof(VE_Mesh), VE_Mesh_UpdateSystem, VE_Mesh_DeleteSystem);
 }

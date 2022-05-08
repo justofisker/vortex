@@ -11,19 +11,12 @@
 #include <cglm/cglm.h>
 
 int main(int argc, char *argv[]) {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+    SDL_Init(SDL_INIT_VIDEO);
 
     SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
     VE_TextureT *pTexture = VE_Render_LoadTexture("texture.jpg", NULL);
-
-    VE_MeshObject_T *pPlaneMesh = VE_Render_CreatePlaneMesh(1.0f, 1.0f, pTriangleProgram);
-    VE_Render_SetMeshObjectTexture(pPlaneMesh, pTexture);
-    VE_MeshObject_T *pCylinderMesh = VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram);
-    VE_Render_SetMeshObjectTexture(pCylinderMesh, pTexture);
-    pCylinderMesh->transform.position[2] = -1.0f;
-
 
     VE_Audio_Init();
 
@@ -33,13 +26,21 @@ int main(int argc, char *argv[]) {
 
     VE_SetupBuiltinComponents();
 
-    VE_EntityHandleT entHandle = VE_ECS_CreateEntity();
+    VE_EntityHandleT entTest = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner());
+    VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
+    VE_ECS_InsertComponent(entTest, VE_NewSoundPlayer(audio, 1.0, 1.0, 1));
+    VE_PlaySoundPlayer(VE_ECS_GetComponent(entTest, VE_SoundPlayerID));
 
-    VE_ECS_InsertComponent(entHandle, VE_NewTestComponentSpawner());
-    VE_ECS_InsertComponent(entHandle, VE_NewTransform((vec3) { 1.0f, 0.0f, 0.0f }, (vec3) { 0.0f, 0.0f, 0.0f }, (vec3) { 1.0f, 1.0f, 1.0f }));
-    VE_ECS_InsertComponent(entHandle, VE_NewSoundPlayer(audio, 1.0, 1.0, 1));
+    VE_EntityHandleT entPlane = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entPlane, VE_NewTransform(GLM_VEC3_ZERO, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entPlane, VE_NewMesh(VE_Render_CreatePlaneMesh(1.0f, 1.0f, pTriangleProgram)));
+    VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entPlane, VE_MeshID))->pMeshObject, pTexture);
 
-    VE_PlaySoundPlayer(VE_ECS_GetComponent(entHandle, VE_SoundPlayerID));
+    VE_EntityHandleT entCylinder = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entCylinder, VE_NewTransform((vec3){0.0f, 0.0f, -3.0f}, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entCylinder, VE_NewMesh(VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram)));
+    VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entCylinder, VE_MeshID))->pMeshObject, pTexture);
 
     char running = 1;
     char minimized = 0;
@@ -54,8 +55,8 @@ int main(int argc, char *argv[]) {
                     switch (event.window.event) {
                         case SDL_WINDOWEVENT_RESIZED:
                             VE_Render_Resize();
-                            VE_Render_SetMeshObjectTexture(pPlaneMesh, pTexture);
-                            VE_Render_SetMeshObjectTexture(pCylinderMesh, pTexture);
+                            VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entPlane, VE_MeshID))->pMeshObject, pTexture);
+                            VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entCylinder, VE_MeshID))->pMeshObject, pTexture);
                             break;
                         case SDL_WINDOWEVENT_MINIMIZED:
                             minimized = 1;
@@ -67,21 +68,21 @@ int main(int argc, char *argv[]) {
                     break;
             }
         }
-        if (minimized) continue;
 
-        pPlaneMesh->transform.position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
-        VE_Render_UpdateMeshUniformBuffer(pPlaneMesh);
-        glm_quatv(pCylinderMesh->transform.rotation, SDL_GetTicks() / 1000.0f, (vec3){0.0f, 0.0f, 1.0f});
-        VE_Render_UpdateMeshUniformBuffer(pCylinderMesh);
+
+
+        ((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
+        //((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->_update = 1;
+        ((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->rotation[2] = SDL_GetTicks() / 1000.0f;
+        //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
 
         // Tick
         VE_ECS_UpdateScene();
 
+        if (minimized) continue;
+
         // Render
-        VE_Render_BeginFrame();
-        VE_Render_Draw(pCylinderMesh);
-        VE_Render_Draw(pPlaneMesh);
-        VE_Render_EndFrame();
+        VE_Render_RenderScene();
     }
 
     VE_ECS_DestroyScene();
@@ -89,8 +90,6 @@ int main(int argc, char *argv[]) {
     VE_Audio_Destroy();
 
     VE_Render_DestroyTexture(pTexture);
-    VE_Render_DestroyMeshObject(pCylinderMesh);
-    VE_Render_DestroyMeshObject(pPlaneMesh);
     VE_Render_DestroyProgram(pTriangleProgram);
     VE_Render_Destroy();
     return 0;
