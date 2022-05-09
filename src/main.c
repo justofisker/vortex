@@ -22,8 +22,6 @@ int main(int argc, char *argv[]) {
 
     ALuint audio = VE_Audio_LoadSound("music.ogg");
 
-    ALuint source = VE_Audio_CreateSource(audio);
-
     VE_SetupBuiltinComponents();
 
     VE_EntityHandleT entTest = VE_ECS_CreateEntity();
@@ -86,6 +84,8 @@ int main(int argc, char *argv[]) {
     }
 
     VE_ECS_DestroyScene();
+
+    VE_Audio_DestroySound(audio);
 
     VE_Audio_Destroy();
 

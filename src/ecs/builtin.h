@@ -41,7 +41,7 @@ void VE_Mesh_DeleteSystem(void *pData);
 void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData);
 
 typedef struct VE_SoundPlayer {
-	uint32_t id;
+	uint32_t _id;
 	ALuint source;
 	float volume;
 	float pitch;

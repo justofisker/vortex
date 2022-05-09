@@ -26,7 +26,7 @@ void VE_Audio_Destroy() {
 	alcCloseDevice(VE_G_pAudioDevice);
 }
 
-ALuint VE_Load_Ogg(const char *pFileName) {
+ALuint VE_Audio_LoadOgg(const char *pFileName) {
 	ALuint buffer;
 
 	alGenBuffers(1, &buffer);
@@ -74,7 +74,7 @@ ALuint VE_Audio_LoadSound(const char *pFileName) {
 	const char *pFileExtension = pFileName + (len - 3);
 
 	if (strcmp(pFileExtension, "ogg") == 0) {
-		return VE_Load_Ogg(pFileName);
+		return VE_Audio_LoadOgg(pFileName);
 	}
 
 	return 0;

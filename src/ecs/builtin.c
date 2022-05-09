@@ -14,10 +14,6 @@ void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_TestComponent* component = (VE_TestComponent *)pData;
 	//printf("Updating component with value %i\n", component->counter);
 	component->counter++;
-	VE_Transform *transform = (VE_Transform *)VE_ECS_GetComponent(entityHandle, VE_TransformID);
-	if (transform) {
-		//printf("Found transform on entity, position is %.3f %.3f %.3f\n", transform->position[0], transform->position[1], transform->position[2]);
-	}
 	if (component->counter >= component->maxVal) {
 		printf("Deleting test component.\n");
 		VE_ECS_DestroyEntity(entityHandle);
@@ -38,20 +34,21 @@ void VE_TestComponentSpawner_UpdateSystem(VE_EntityHandleT entityHandle, void *p
 
 VE_TestComponentSpawner *VE_NewTestComponentSpawner() {
 	VE_TestComponentSpawner *pComponent = malloc(sizeof(VE_TestComponentSpawner));
-	*pComponent = (VE_TestComponentSpawner){VE_TestComponentSpawnerID};
+	*pComponent = (VE_TestComponentSpawner){ VE_TestComponentSpawnerID };
 	return pComponent;
 }
 
 void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_Transform *transform = (VE_Transform *)pData;
 	if (transform->_update) {
+		printf("Updating transform.\n");
         mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
 		glm_translate(transform_mat, transform->position);
 		glm_rotate(transform_mat, transform->rotation[0], GLM_XUP);
 		glm_rotate(transform_mat, transform->rotation[1], GLM_YUP);
 		glm_rotate(transform_mat, transform->rotation[2], GLM_ZUP);
 		glm_scale(transform_mat, transform->scale);
-        //glm_mat4_copy(transform_mat, transform->_matrix); // TODO figure out why this causes SIGSEGV
+        glm_mat4_copy(transform_mat, transform->_matrix); // TODO figure out why this causes SIGSEGV
 		transform->_update = 0;
 	}
 }
@@ -111,11 +108,13 @@ void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 
 void VE_SoundPlayer_DestroySystem(void *pData) {
 	VE_SoundPlayer *soundPlayer = pData;
-	VE_Audio_DestroySource(&soundPlayer->source);
+	alSourcePause(soundPlayer->source);
+	VE_Audio_DestroySource(soundPlayer->source);
 }
 
 VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping) {
 	ALuint source = VE_Audio_CreateSource(sound);
+	printf("Source handle: %u\n", source);
 	VE_SoundPlayer *pComponent = malloc(sizeof(VE_SoundPlayer));
 	*pComponent = (VE_SoundPlayer){VE_SoundPlayerID, source, volume, pitch, looping};
 	return pComponent;
