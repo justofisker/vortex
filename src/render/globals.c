@@ -1,4 +1,5 @@
 #include "globals.h"
+#include <cglm/cglm.h>
 
 SDL_Window *VE_G_Window = NULL;
 VkInstance VE_G_Instance = VK_NULL_HANDLE;
@@ -32,6 +33,8 @@ VkRenderPass VE_G_RenderPass = VK_NULL_HANDLE;
 VkFramebuffer *VE_G_pFramebuffers = NULL;
 uint32_t VE_G_MeshEntityCount = 0;
 VE_MeshObject_T *VE_G_pMeshEntities[256] = { NULL };
+mat4 VE_G_ProjectionMatrix = GLM_MAT4_IDENTITY_INIT;
+mat4 VE_G_ViewMatrix = GLM_MAT4_IDENTITY_INIT;
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG

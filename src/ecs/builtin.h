@@ -40,6 +40,15 @@ VE_Mesh *VE_NewMesh(VE_MeshObject_T* pMeshObject);
 void VE_Mesh_DeleteSystem(void *pData);
 void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData);
 
+typedef struct VE_Camera {
+	uint32_t id;
+	float fov;
+	float nearPlane;
+	float farPlane;
+} VE_Camera;
+extern uint32_t VE_CameraID;
+VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane);
+
 typedef struct VE_SoundPlayer {
 	uint32_t _id;
 	ALuint source;
@@ -50,6 +59,12 @@ typedef struct VE_SoundPlayer {
 extern uint32_t VE_SoundPlayerID;
 VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping);
 void VE_PlaySoundPlayer(VE_SoundPlayer *soundPlayer);
+
+typedef struct VE_AudioListener {
+	uint32_t _id;
+} VE_AudioListener;
+extern uint32_t VE_AudioListenerID;
+VE_AudioListener *VE_NewAudioListener();
 
 void VE_SetupBuiltinComponents();
 

@@ -8,7 +8,9 @@ uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
 uint32_t VE_TransformID = 0;
 uint32_t VE_SoundPlayerID = 0;
+uint32_t VE_AudioListenerID = 0;
 uint32_t VE_MeshID = 0;
+uint32_t VE_CameraID = 0;
 
 void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_TestComponent* component = (VE_TestComponent *)pData;
@@ -66,6 +68,25 @@ VE_Transform *VE_NewTransform(vec3 position, vec3 rotation, vec3 scale) {
 	return pComponent;
 }
 
+void VE_Camera_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
+	VE_Camera *pCamera = pData;
+	mat4 projectionMatrix = GLM_MAT4_IDENTITY_INIT;
+	glm_perspective(pCamera->fov, VE_Render_GetAspectRatio(), pCamera->nearPlane, pCamera->farPlane, projectionMatrix);
+	VE_Render_SetProjectionMatrix(projectionMatrix);
+	VE_Transform *transform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
+	if (transform) {
+		mat4 viewMatrix = GLM_MAT4_IDENTITY_INIT;
+		glm_mat4_inv(transform->_matrix, viewMatrix);
+		VE_Render_SetViewMatrix(viewMatrix);
+	}
+}
+
+VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
+	VE_Camera *pComponent = malloc(sizeof(VE_Camera));
+	*pComponent = (VE_Camera){ VE_CameraID, fov, nearPlane, farPlane };
+	return pComponent;
+}
+
 void VE_Mesh_DeleteSystem(void *pData) {
     VE_Mesh *pMesh = pData;
     VE_Render_UnregisterEntity(pMesh->pMeshObject);
@@ -97,18 +118,16 @@ void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_SoundPlayer *soundPlayer = (VE_SoundPlayer *)pData;
 	VE_Transform *transform = (VE_Transform *)VE_ECS_GetComponent(entityHandle, VE_TransformID);
 	if (transform) {
-		alSourcei(soundPlayer->source, AL_SOURCE_RELATIVE, AL_FALSE);
-		alSource3f(soundPlayer->source, AL_POSITION, transform->position[0], transform->position[1], transform->position[2]);
+		VE_Audio_SetSourceRelative(soundPlayer->source, 0);
+		VE_Audio_SetSourcePosition(soundPlayer->source, transform->position);
 	}
 	else {
-		alSourcei(soundPlayer->source, AL_SOURCE_RELATIVE, AL_TRUE);
+		VE_Audio_SetSourceRelative(soundPlayer->source, 1);
 	}
-	
 }
 
 void VE_SoundPlayer_DestroySystem(void *pData) {
 	VE_SoundPlayer *soundPlayer = pData;
-	alSourcePause(soundPlayer->source);
 	VE_Audio_DestroySource(soundPlayer->source);
 }
 
@@ -127,10 +146,36 @@ void VE_PlaySoundPlayer(VE_SoundPlayer *soundPlayer) {
 	VE_Audio_Play(soundPlayer->source);
 }
 
+void VE_AudioListener_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
+	VE_Transform *transform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
+	if (transform) {
+		VE_Audio_SetListenerPosition(transform->position);
+
+		vec3 forwardVec = { 0.0, 0.0, -1.0 };
+		glm_vec3_rotate(forwardVec, transform->rotation[0], GLM_XUP);
+		glm_vec3_rotate(forwardVec, transform->rotation[1], GLM_YUP);
+		glm_vec3_rotate(forwardVec, transform->rotation[2], GLM_ZUP);
+		vec3 upVec = { 0.0, 1.0, 0.0 };
+		glm_vec3_rotate(upVec, transform->rotation[0], GLM_XUP);
+		glm_vec3_rotate(upVec, transform->rotation[1], GLM_YUP);
+		glm_vec3_rotate(upVec, transform->rotation[2], GLM_ZUP);
+		
+		VE_Audio_SetListenerOrientation(forwardVec, upVec);
+	}
+}
+
+VE_AudioListener *VE_NewAudioListener() {
+	VE_AudioListener *pComponent = malloc(sizeof(VE_AudioListener));
+	*pComponent = (VE_AudioListener){ VE_AudioListenerID };
+	return pComponent;
+}
+
 void VE_SetupBuiltinComponents() {
 	VE_TestComponentID = VE_ECS_RegisterComponent("TestComponent", sizeof(VE_TestComponent), VE_TestComponent_UpdateSystem, NULL);
 	VE_TestComponentSpawnerID = VE_ECS_RegisterComponent("TestComponentSpawner", sizeof(VE_TestComponentSpawner), VE_TestComponentSpawner_UpdateSystem, NULL);
 	VE_TransformID = VE_ECS_RegisterComponent("Transform", sizeof(VE_Transform), VE_Transform_UpdateSystem, NULL);
+	VE_CameraID = VE_ECS_RegisterComponent("Camera", sizeof(VE_Camera), VE_Camera_UpdateSystem, NULL);
+	VE_MeshID = VE_ECS_RegisterComponent("Mesh", sizeof(VE_Mesh), VE_Mesh_UpdateSystem, VE_Mesh_DeleteSystem);
 	VE_SoundPlayerID = VE_ECS_RegisterComponent("SoundPlayer", sizeof(VE_SoundPlayer), VE_SoundPlayer_UpdateSystem, VE_SoundPlayer_DestroySystem);
-    VE_MeshID = VE_ECS_RegisterComponent("Mesh", sizeof(VE_Mesh), VE_Mesh_UpdateSystem, VE_Mesh_DeleteSystem);
+	VE_AudioListenerID = VE_ECS_RegisterComponent("AudioListener", sizeof(VE_AudioListener), VE_AudioListener_UpdateSystem, NULL);
 }

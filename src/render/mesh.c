@@ -147,10 +147,8 @@ void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject, mat4 modelM
 
     glm_mat4_copy(modelMatrix, ubo.model);
 
-    glm_lookat((vec3) {2.f, 2.f, 2.f}, (vec3) {0.f, 0.f, 0.f}, (vec3) {0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(60.f), VE_G_SwapchainExtent.width / (float) VE_G_SwapchainExtent.height, 0.1f, 10.f,
-                    ubo.projection);
-    ubo.projection[1][1] *= -1;
+    glm_mat4_copy(VE_G_ProjectionMatrix, ubo.projection);
+    glm_mat4_copy(VE_G_ViewMatrix, ubo.view);
 
     void *data;
     vkMapMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);
