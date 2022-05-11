@@ -16,9 +16,11 @@ VE_TestComponent *VE_NewTestComponent(int counter, int maxVal);
 
 typedef struct VE_TestComponentSpawner {
 	uint32_t id;
+	VE_ProgramT *pProgram;
+	VE_TextureT *pTexture;
 } VE_TestComponentSpawner;
 extern uint32_t VE_TestComponentSpawnerID;
-VE_TestComponentSpawner *VE_NewTestComponentSpawner();
+VE_TestComponentSpawner *VE_NewTestComponentSpawner(VE_ProgramT *pProgram, VE_TextureT *pTexture);
 
 typedef struct VE_Transform {
 	uint32_t _id;

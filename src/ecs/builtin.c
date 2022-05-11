@@ -17,8 +17,11 @@ void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	//printf("Updating component with value %i\n", component->counter);
 	component->counter++;
 	if (component->counter >= component->maxVal) {
-		printf("Deleting test component.\n");
 		VE_ECS_DestroyEntity(entityHandle);
+	}
+	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
+	if (pTransform) {
+		pTransform->position[1] = 2.0 - component->counter * 0.1f;
 	}
 }
 
@@ -29,21 +32,25 @@ VE_TestComponent *VE_NewTestComponent(int counter, int maxVal) {
 }
 
 void VE_TestComponentSpawner_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
+#define RAND_FLOAT (((float)rand()/(float)(RAND_MAX)) * 2.0 - 1.0)
 	VE_TestComponentSpawner *pSpawner = (VE_TestComponentSpawner *)pData;
 	VE_EntityHandleT newEntity = VE_ECS_CreateEntity();
-	VE_ECS_InsertComponent(newEntity, VE_NewTestComponent(0, 100000));
+	VE_ECS_InsertComponent(newEntity, VE_NewTestComponent(0, 100));
+	
+	VE_ECS_InsertComponent(newEntity, VE_NewTransform((vec3) { RAND_FLOAT * 0.2f, 2.0f, RAND_FLOAT * 0.2f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+	VE_ECS_InsertComponent(newEntity, VE_NewMesh(VE_Render_CreateCubeMesh(0.1, 0.1, 0.1, pSpawner->pProgram)));
+	VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(newEntity, VE_MeshID))->pMeshObject, pSpawner->pTexture);
 }
 
-VE_TestComponentSpawner *VE_NewTestComponentSpawner() {
+VE_TestComponentSpawner *VE_NewTestComponentSpawner(VE_ProgramT *pProgram, VE_TextureT *pTexture) {
 	VE_TestComponentSpawner *pComponent = malloc(sizeof(VE_TestComponentSpawner));
-	*pComponent = (VE_TestComponentSpawner){ VE_TestComponentSpawnerID };
+	*pComponent = (VE_TestComponentSpawner){ VE_TestComponentSpawnerID, pProgram, pTexture };
 	return pComponent;
 }
 
 void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_Transform *transform = (VE_Transform *)pData;
 	if (transform->_update) {
-		printf("Updating transform.\n");
         mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
 		glm_translate(transform_mat, transform->position);
 		glm_rotate(transform_mat, transform->rotation[2], GLM_ZUP);
@@ -134,7 +141,6 @@ void VE_SoundPlayer_DestroySystem(void *pData) {
 
 VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping) {
 	ALuint source = VE_Audio_CreateSource(sound);
-	printf("Source handle: %u\n", source);
 	VE_SoundPlayer *pComponent = malloc(sizeof(VE_SoundPlayer));
 	*pComponent = (VE_SoundPlayer){VE_SoundPlayerID, source, volume, pitch, looping};
 	return pComponent;

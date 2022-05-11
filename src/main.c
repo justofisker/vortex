@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     VE_SetupBuiltinComponents();
 
     VE_EntityHandleT entTest = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner());
+    VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner(pTriangleProgram, pTexture));
     VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
 
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
@@ -44,6 +44,11 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entCylinder, VE_NewTransform((vec3){0.0f, -2.0f, 0.0f}, GLM_VEC3_ZERO, GLM_VEC3_ONE));
     VE_ECS_InsertComponent(entCylinder, VE_NewMesh(VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entCylinder, VE_MeshID))->pMeshObject, pTexture);
+
+    VE_EntityHandleT entCube = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entCube, VE_NewTransform((vec3) { -2.0f, 0.0f, 0.0f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entCube, VE_NewMesh(VE_Render_CreateCubeMesh(1.0, 1.0, 1.0f, pTriangleProgram)));
+    VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(entCube, VE_MeshID))->pMeshObject, pTexture);
 
     char running = 1;
     char minimized = 0;
@@ -77,6 +82,10 @@ int main(int argc, char *argv[]) {
         ((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
         //((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->_update = 1;
         ((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->rotation[2] = SDL_GetTicks() / 1000.0f;
+        //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
+        ((VE_Transform *)VE_ECS_GetComponent(entCube, VE_TransformID))->rotation[1] = SDL_GetTicks() / 1000.0f;
+        //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
+        ((VE_Transform *)VE_ECS_GetComponent(entCube, VE_TransformID))->rotation[2] = SDL_GetTicks() / 1000.0f;
         //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
 
         // Tick
