@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
 
     char running = 1;
     char minimized = 0;
+    uint64_t last = SDL_GetTicks64();
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
         //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
         ((VE_Transform *)VE_ECS_GetComponent(entCube, VE_TransformID))->rotation[1] = SDL_GetTicks() / 1000.0f;
         //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
-        ((VE_Transform *)VE_ECS_GetComponent(entCube, VE_TransformID))->rotation[2] = SDL_GetTicks() / 1000.0f;
+        ((VE_Transform *)VE_ECS_GetComponent(entCube, VE_TransformID))->rotation[2] = SDL_GetTicks() / 2000.0f;
         //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
 
         // Tick
@@ -95,6 +96,12 @@ int main(int argc, char *argv[]) {
 
         // Render
         VE_Render_RenderScene();
+
+        while (SDL_GetTicks64() < last + 2) {
+
+        }
+
+        last = SDL_GetTicks64();
     }
 
     VE_ECS_DestroyScene();
