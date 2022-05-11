@@ -26,7 +26,7 @@ void VE_Audio_Destroy() {
 	alcCloseDevice(VE_G_pAudioDevice);
 }
 
-ALuint VE_Load_Ogg(const char *pFileName) {
+ALuint VE_Audio_LoadOgg(const char *pFileName) {
 	ALuint buffer;
 
 	alGenBuffers(1, &buffer);
@@ -74,7 +74,7 @@ ALuint VE_Audio_LoadSound(const char *pFileName) {
 	const char *pFileExtension = pFileName + (len - 3);
 
 	if (strcmp(pFileExtension, "ogg") == 0) {
-		return VE_Load_Ogg(pFileName);
+		return VE_Audio_LoadOgg(pFileName);
 	}
 
 	return 0;
@@ -91,10 +91,31 @@ ALuint VE_Audio_CreateSource(ALuint sound) {
 	return source;
 }
 
+void VE_Audio_SetSourcePosition(ALuint source, vec3 position) {
+	alSourcefv(source, AL_POSITION, position);
+}
+
+void VE_Audio_SetSourceVelocity(ALuint source, vec3 velocity) {
+	alSourcefv(source, AL_VELOCITY, velocity);
+}
+
+void VE_Audio_SetSourceRelative(ALuint source, int relative) {
+	alSourcei(source, AL_SOURCE_RELATIVE, relative);
+}
+
 void VE_Audio_DestroySource(ALuint source) {
 	alDeleteSources(1, &source);
 }
 
 void VE_Audio_Play(ALuint source) {
 	alSourcePlay(source);
+}
+
+void VE_Audio_SetListenerPosition(vec3 position) {
+	alListenerfv(AL_POSITION, position);
+}
+
+void VE_Audio_SetListenerOrientation(vec3 forward, vec3 up) {
+	const float orientation[] = {forward[0], forward[1], forward[2], up[0], up[1], up[2]};
+	alListenerfv(AL_ORIENTATION, orientation);
 }

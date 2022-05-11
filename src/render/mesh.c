@@ -142,15 +142,64 @@ VE_MeshObject_T *VE_Render_CreatePlaneMesh(float width, float height, VE_Program
     return VE_Render_CreateMeshObject(vertices, sizeof(vertices) / sizeof(vertices[0]), indices, sizeof(indices) / sizeof(indices[0]), pProgram);
 }
 
+VE_MeshObject_T *VE_Render_CreateCubeMesh(float width, float height, float depth, VE_ProgramT *pProgram) {
+    VE_VertexT vertices[] = {
+            // Front
+            {{-0.5f * width, -0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 0.0f}},
+            {{0.5f * width, -0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 0.0f}},
+            {{0.5f * width, 0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 1.0f}},
+            {{-0.5f * width, 0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 1.0f}},
+
+            // Back
+            {{-0.5f * width, -0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, -1.0f}, {1.0f, 0.0f}},
+            {{0.5f * width, -0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, -1.0f}, {0.0f, 0.0f}},
+            {{0.5f * width, 0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, -1.0f}, {0.0f, 1.0f}},
+            {{-0.5f * width, 0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 0.0, -1.0f}, {1.0f, 1.0f}},
+
+            // Right
+            {{0.5f * width, -0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {1.0, 0.0, 0.0f}, {1.0f, 0.0f}},
+            {{0.5f * width, -0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {1.0, 0.0, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f * width, 0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {1.0, 0.0, 0.0f}, {0.0f, 1.0f}},
+            {{0.5f * width, 0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {1.0, 0.0, 0.0f}, {1.0f, 1.0f}},
+
+            // Left
+            {{-0.5f * width, -0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {-1.0, 0.0, 0.0f}, {1.0f, 0.0f}},
+            {{-0.5f * width, -0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {-1.0, 0.0, 0.0f}, {0.0f, 0.0f}},
+            {{-0.5f * width, 0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {-1.0, 0.0, 0.0f}, {0.0f, 1.0f}},
+            {{-0.5f * width, 0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {-1.0, 0.0, 0.0f}, {1.0f, 1.0f}},
+
+            // Top
+            {{-0.5f * width, 0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {1.0f, 0.0f}},
+            {{-0.5f * width, 0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f * width, 0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {0.0f, 1.0f}},
+            {{0.5f * width, 0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {1.0f, 1.0f}},
+
+            // Bottom
+            {{-0.5f * width, -0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, -1.0, 0.0f}, {1.0f, 0.0f}},
+            {{-0.5f * width, -0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, -1.0, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f * width, -0.5f * height, 0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, -1.0, 0.0f}, {0.0f, 1.0f}},
+            {{0.5f * width, -0.5f * height, -0.5f * depth}, GLM_VEC3_ONE_INIT, {0.0, -1.0, 0.0f}, {1.0f, 1.0f}},
+    };
+
+    uint16_t indices[] = {
+            0, 1, 2, 2, 3, 0,
+            4, 6, 5, 7, 6, 4,
+            8, 10, 9, 11, 10, 8,
+            12, 13, 14, 14, 15, 12,
+            16, 17, 18, 18, 19, 16,
+            20, 22, 21, 23, 22, 20,
+    };
+
+    return VE_Render_CreateMeshObject(vertices, sizeof(vertices) / sizeof(vertices[0]), indices, sizeof(indices) / sizeof(indices[0]), pProgram);
+}
+
 void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject, mat4 modelMatrix) {
     VE_UniformBufferObjectT ubo = {0};
 
     glm_mat4_copy(modelMatrix, ubo.model);
 
-    glm_lookat((vec3) {2.f, 2.f, 2.f}, (vec3) {0.f, 0.f, 0.f}, (vec3) {0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(60.f), VE_G_SwapchainExtent.width / (float) VE_G_SwapchainExtent.height, 0.1f, 10.f,
-                    ubo.projection);
-    ubo.projection[1][1] *= -1;
+    glm_mat4_copy(VE_G_ProjectionMatrix, ubo.projection);
+    glm_mat4_copy(VE_G_ViewMatrix, ubo.view);
 
     void *data;
     vkMapMemory(VE_G_Device, pMeshObject->pUniformBufferMemory[VE_G_CurrentFrame], 0, sizeof(ubo), 0, &data);

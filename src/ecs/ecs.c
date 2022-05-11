@@ -34,6 +34,9 @@ uint32_t VE_ECS_GetEntitySize(VE_EntityHandleT entityHandle) {
 	return size;
 }
 
+// Copy component data into entity. Frees component data afterwards.
+// DO NOT attempt to insert the same component to two entities.
+// DO NOT attempt to use the component pointer after adding it. Get the component off of the entity;
 void VE_ECS_InsertComponent(VE_EntityHandleT entityHandle, void *pComponent) {
 	uint32_t id = *(uint32_t *)pComponent;
 	uint32_t componentSize = VE_G_ComponentSizes[id];
@@ -45,6 +48,7 @@ void VE_ECS_InsertComponent(VE_EntityHandleT entityHandle, void *pComponent) {
 		return;
 	}
 	memcpy((char *)pComponents + prevSize, pComponent, componentSize);
+	free(pComponent);
 	VE_G_CurrentScene.pEntities[entityHandle].pComponents = pComponents;
 	VE_G_CurrentScene.pEntities[entityHandle].componentCount++;
 }

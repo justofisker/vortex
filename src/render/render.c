@@ -91,6 +91,10 @@ void VE_Render_Resize() {
     VE_Render_CreateFramebuffers();
 }
 
+float VE_Render_GetAspectRatio() {
+    return VE_G_SwapchainExtent.width / (float)VE_G_SwapchainExtent.height;
+}
+
 static uint32_t imageIndex = 0;
 
 void VE_Render_BeginFrame() {
@@ -189,4 +193,12 @@ void VE_Render_UnregisterEntity(VE_MeshObject_T *pMeshObject) {
             }
         }
     }
+}
+
+void VE_Render_SetProjectionMatrix(mat4 projectionMatrix) {
+    glm_mat4_copy(projectionMatrix, VE_G_ProjectionMatrix);
+}
+
+void VE_Render_SetViewMatrix(mat4 viewMatrix) {
+    glm_mat4_copy(viewMatrix, VE_G_ViewMatrix);
 }
