@@ -46,9 +46,9 @@ void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 		printf("Updating transform.\n");
         mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
 		glm_translate(transform_mat, transform->position);
-		glm_rotate(transform_mat, transform->rotation[0], GLM_XUP);
-		glm_rotate(transform_mat, transform->rotation[1], GLM_YUP);
 		glm_rotate(transform_mat, transform->rotation[2], GLM_ZUP);
+		glm_rotate(transform_mat, transform->rotation[1], GLM_YUP);
+		glm_rotate(transform_mat, transform->rotation[0], GLM_XUP);
 		glm_scale(transform_mat, transform->scale);
         glm_mat4_copy(transform_mat, transform->_matrix); // TODO figure out why this causes SIGSEGV
 		transform->_update = 0;
@@ -72,6 +72,7 @@ void VE_Camera_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_Camera *pCamera = pData;
 	mat4 projectionMatrix = GLM_MAT4_IDENTITY_INIT;
 	glm_perspective(pCamera->fov, VE_Render_GetAspectRatio(), pCamera->nearPlane, pCamera->farPlane, projectionMatrix);
+	projectionMatrix[1][1] *= -1;
 	VE_Render_SetProjectionMatrix(projectionMatrix);
 	VE_Transform *transform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
 	if (transform) {
@@ -99,9 +100,9 @@ void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
     if (transform) {
         mat4 newMatrix = GLM_MAT4_IDENTITY_INIT;
         glm_translate(newMatrix, transform->position);
-        glm_rotate(newMatrix, transform->rotation[0], GLM_XUP);
+		glm_rotate(newMatrix, transform->rotation[2], GLM_ZUP);
         glm_rotate(newMatrix, transform->rotation[1], GLM_YUP);
-        glm_rotate(newMatrix, transform->rotation[2], GLM_ZUP);
+		glm_rotate(newMatrix, transform->rotation[0], GLM_XUP);
         glm_scale(newMatrix, transform->scale);
         VE_Render_UpdateMeshUniformBuffer(pMesh->pMeshObject, newMatrix);
     }
@@ -152,13 +153,13 @@ void VE_AudioListener_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 		VE_Audio_SetListenerPosition(transform->position);
 
 		vec3 forwardVec = { 0.0, 0.0, -1.0 };
-		glm_vec3_rotate(forwardVec, transform->rotation[0], GLM_XUP);
-		glm_vec3_rotate(forwardVec, transform->rotation[1], GLM_YUP);
 		glm_vec3_rotate(forwardVec, transform->rotation[2], GLM_ZUP);
+		glm_vec3_rotate(forwardVec, transform->rotation[1], GLM_YUP);
+		glm_vec3_rotate(forwardVec, transform->rotation[0], GLM_XUP);
 		vec3 upVec = { 0.0, 1.0, 0.0 };
-		glm_vec3_rotate(upVec, transform->rotation[0], GLM_XUP);
-		glm_vec3_rotate(upVec, transform->rotation[1], GLM_YUP);
 		glm_vec3_rotate(upVec, transform->rotation[2], GLM_ZUP);
+		glm_vec3_rotate(upVec, transform->rotation[1], GLM_YUP);
+		glm_vec3_rotate(upVec, transform->rotation[0], GLM_XUP);
 		
 		VE_Audio_SetListenerOrientation(forwardVec, upVec);
 	}

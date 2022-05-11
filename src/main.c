@@ -29,8 +29,8 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
 
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entCamera, VE_NewTransform((vec3) { 2.0, 2.0, -2.0 }, (vec3) { glm_rad(0.0), glm_rad(135.0), 0.0 }, GLM_VEC3_ONE));
-    VE_ECS_InsertComponent(entCamera, VE_NewCamera(glm_rad(45.0), 0.1, 256.0));
+    VE_ECS_InsertComponent(entCamera, VE_NewTransform((vec3) { 2.0, 2.0, 2.0 }, (vec3) { glm_rad(-45.0), glm_rad(45.0), 0.0 }, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entCamera, VE_NewCamera(glm_rad(90.0), 0.1, 256.0));
     VE_ECS_InsertComponent(entCamera, VE_NewAudioListener());
 
     VE_EntityHandleT entPlane = VE_ECS_CreateEntity();
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     VE_PlaySoundPlayer(VE_ECS_GetComponent(entPlane, VE_SoundPlayerID));
 
     VE_EntityHandleT entCylinder = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entCylinder, VE_NewTransform((vec3){0.0f, 0.0f, -3.0f}, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entCylinder, VE_NewTransform((vec3){0.0f, -2.0f, 0.0f}, GLM_VEC3_ZERO, GLM_VEC3_ONE));
     VE_ECS_InsertComponent(entCylinder, VE_NewMesh(VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entCylinder, VE_MeshID))->pMeshObject, pTexture);
 
