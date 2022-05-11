@@ -111,7 +111,7 @@ void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 
 void VE_SoundPlayer_DestroySystem(void *pData) {
 	VE_SoundPlayer *soundPlayer = pData;
-	VE_Audio_DestroySource(&soundPlayer->source);
+	VE_Audio_DestroySource(soundPlayer->source);
 }
 
 VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping) {
