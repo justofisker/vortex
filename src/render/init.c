@@ -77,7 +77,7 @@ void VE_Render_CreateInstance() {
     const char* ppDebugLayers[] = {"VK_LAYER_KHRONOS_validation" };
     createInfo.enabledLayerCount = sizeof(ppDebugLayers[0]) / sizeof(ppDebugLayers);
     createInfo.ppEnabledLayerNames = ppDebugLayers;
-    const char **ppInstanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
+    char **ppInstanceExtensions = malloc(sizeof(char*) * (sdlInstanceCount + 1));
     ppInstanceExtensions[sdlInstanceCount] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
     createInfo.enabledExtensionCount = sdlInstanceCount + 1;
 #endif // NDEBUG
