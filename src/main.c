@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
 
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entCamera, VE_NewFlyCam(2.0, 0.001));
+    VE_ECS_InsertComponent(entCamera, VE_NewFlyCam(4.0, 0.001));
     VE_ECS_InsertComponent(entCamera, VE_NewTransform((vec3) { 2.0, 2.0, 2.0 }, (vec3) { glm_rad(-45.0), glm_rad(45.0), 0.0 }, GLM_VEC3_ONE));
     VE_ECS_InsertComponent(entCamera, VE_NewCamera(glm_rad(60.0), 0.1, 256.0));
     VE_ECS_InsertComponent(entCamera, VE_NewAudioListener());
