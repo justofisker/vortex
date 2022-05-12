@@ -6,6 +6,9 @@
 #include <cglm/cglm.h>
 #include "globals.h"
 #include "util.h"
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 VE_MeshObject_T *VE_Render_CreateCylinderMesh(int vertex_count, float radius, float depth, VE_ProgramT *pProgram)
 {
@@ -228,6 +231,54 @@ VE_MeshObject_T *VE_Render_CreateUVSphereMesh(float radius, uint32_t rings, uint
     }
 
     return VE_Render_CreateMeshObject(pVertices, n_vertices, pIndices, n_indices, pProgram);
+}
+
+VE_ImportedModel_T VE_Render_ImportMesh(const char *pFilePath, VE_ProgramT *pProgram) {
+    const struct aiScene *pScene = aiImportFile(pFilePath, aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+
+    VE_ImportedModel_T importedModel = { NULL, 0 };
+    
+    if (pScene) {
+        importedModel.numMeshes = pScene->mNumMeshes;
+        importedModel.meshes = malloc(sizeof(VE_MeshObject_T *) * importedModel.numMeshes);
+        for (uint32_t i = 0; i < importedModel.numMeshes; i++) {
+            struct aiMesh *pAiMesh = pScene->mMeshes[i];
+            VE_VertexT *pVertices = malloc(sizeof(VE_VertexT) * pAiMesh->mNumVertices);
+            for (uint32_t j = 0; j < pAiMesh->mNumVertices; j++) {
+                vec3 color = GLM_VEC3_ONE_INIT;
+                if (pAiMesh->mColors[0]) {
+                    color[0] = pAiMesh->mColors[0][j].r;
+                    color[1] = pAiMesh->mColors[0][j].g;
+                    color[2] = pAiMesh->mColors[0][j].b;
+                }
+                vec2 texCoord = GLM_VEC2_ZERO_INIT;
+                if (pAiMesh->mTextureCoords[0]) {
+                    texCoord[0] = pAiMesh->mTextureCoords[0][j].x;
+                    texCoord[1] = pAiMesh->mTextureCoords[0][j].y;
+                }
+                pVertices[j] = (VE_VertexT){
+                    {pAiMesh->mVertices[j].x, pAiMesh->mVertices[j].y, pAiMesh->mVertices[j].z},
+                    {color[0], color[1], color[2]},
+                    {pAiMesh->mNormals[j].x, pAiMesh->mNormals[j].y, pAiMesh->mNormals[j].z},
+                    {texCoord[0], texCoord[1]}
+                };
+            }
+
+            uint16_t *pIndices = malloc(sizeof(uint16_t) * pAiMesh->mNumFaces * 3);
+            for (uint32_t j = 0; j < pAiMesh->mNumFaces; j++) {
+                pIndices[j * 3] = pAiMesh->mFaces[j].mIndices[0];
+                pIndices[j * 3 + 1] = pAiMesh->mFaces[j].mIndices[1];
+                pIndices[j * 3 + 1] = pAiMesh->mFaces[j].mIndices[2];
+            }
+
+            struct aiMaterial *pMaterial = pScene->mMaterials[pAiMesh->mMaterialIndex];
+
+            VE_MeshObject_T *pMesh = VE_Render_CreateMeshObject(pVertices, pAiMesh->mNumVertices, pIndices, pAiMesh->mNumFaces * 3, pProgram);
+            importedModel.meshes[i] = pMesh;
+        }
+    }
+
+    return importedModel;
 }
 
 void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject, mat4 modelMatrix) {

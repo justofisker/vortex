@@ -19,3 +19,6 @@
 [submodule "extern/vorbis"]
 	path = extern/vorbis
 	url = https://github.com/xiph/vorbis.git
+[submodule "extern/assimp"]
+	path = extern/assimp
+	url = https://github.com/assimp/assimp.git

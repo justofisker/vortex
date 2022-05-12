@@ -62,6 +62,7 @@ target_include_directories(vortex PRIVATE
         "extern/openal-soft/include"
         "extern/ogg/include"
         "extern/vorbis/include"
+        "extern/assimp/include"
         volk_headers
         )
 
@@ -75,6 +76,7 @@ target_link_libraries(vortex PRIVATE
         ogg
         vorbis
         vorbisfile
+        assimp
         )
 
 if (UNIX)
@@ -112,6 +114,8 @@ add_subdirectory("extern/ogg")
 add_subdirectory("extern/vorbis")
 
 add_subdirectory("extern/openal-soft")
+
+add_subdirectory("extern/assimp")
 
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)
