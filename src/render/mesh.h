@@ -6,6 +6,7 @@
 VE_MeshObject_T *VE_Render_CreateCylinderMesh(int vertex_count, float radius, float depth, VE_ProgramT *pProgram);
 VE_MeshObject_T *VE_Render_CreatePlaneMesh(float width, float height, VE_ProgramT *pProgram);
 VE_MeshObject_T *VE_Render_CreateCubeMesh(float width, float height, float depth, VE_ProgramT *pProgram);
+VE_MeshObject_T *VE_Render_CreateUVSphereMesh(float radius, uint32_t rings, uint32_t sectors, VE_ProgramT *pProgram);
 
 VE_MeshObject_T *VE_Render_CreateMeshObject(VE_VertexT *vertices, uint32_t vertexCount, uint16_t *indices, uint32_t indexCount, VE_ProgramT *pProgram);
 void VE_Render_SetMeshObjectTexture(VE_MeshObject_T *pMeshObject, VE_TextureT *pTexture);

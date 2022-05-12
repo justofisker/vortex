@@ -193,6 +193,43 @@ VE_MeshObject_T *VE_Render_CreateCubeMesh(float width, float height, float depth
     return VE_Render_CreateMeshObject(vertices, sizeof(vertices) / sizeof(vertices[0]), indices, sizeof(indices) / sizeof(indices[0]), pProgram);
 }
 
+VE_MeshObject_T *VE_Render_CreateUVSphereMesh(float radius, uint32_t rings, uint32_t sectors, VE_ProgramT *pProgram) {
+    uint32_t n_vertices = rings * sectors;
+    VE_VertexT *pVertices = malloc(sizeof(VE_VertexT) * n_vertices);
+    uint32_t n_indices = rings * sectors * 6;
+    uint16_t *pIndices = malloc(sizeof(uint16_t) * rings * sectors * 6);
+
+    const float R = 1.0 / (rings - 1);
+    const float S = 1.0 / (sectors - 1);
+
+    uint32_t i = 0;
+    for (uint32_t r = 0; r < rings; r++) {
+        for (uint32_t s = 0; s < sectors; s++) {
+            float y = sinf(-M_PI_2 + M_PI * r * R);
+            float x = cos(2 * M_PI * s * S) * sin(M_PI * r * R);
+            float z = sin(2 * M_PI * s * S) * sin(M_PI * r * R);
+
+            pVertices[i] = (VE_VertexT){ {x * radius, y * radius, z * radius}, GLM_VEC3_ONE_INIT, {x, y, z}, {s * S, r * R} };
+
+            uint16_t a = r * sectors + s;
+            uint16_t b = r * sectors + s + 1;
+            uint16_t c = (r + 1) * sectors + s;
+            uint16_t d = (r + 1) * sectors + s + 1;
+            pIndices[i * 6] = a;
+            pIndices[i * 6 + 1] = c;
+            pIndices[i * 6 + 2] = b;
+
+            pIndices[i * 6 + 3] = b;
+            pIndices[i * 6 + 4] = c;
+            pIndices[i * 6 + 5] = d;
+
+            i++;
+        }
+    }
+
+    return VE_Render_CreateMeshObject(pVertices, n_vertices, pIndices, n_indices, pProgram);
+}
+
 void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject, mat4 modelMatrix) {
     VE_UniformBufferObjectT ubo = {0};
 
