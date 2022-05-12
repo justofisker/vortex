@@ -129,10 +129,10 @@ VE_MeshObject_T *VE_Render_CreateCylinderMesh(int vertex_count, float radius, fl
 
 VE_MeshObject_T *VE_Render_CreatePlaneMesh(float width, float height, VE_ProgramT *pProgram) {
     VE_VertexT vertices[] = {
-            {{-0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 1.0f}},
-            {{0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 1.0f}},
-            {{0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 0.0f} },
-            {{-0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 0.0f}},
+            {{-0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {0.0f, 1.0f}},
+            {{0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {1.0f, 1.0f}},
+            {{0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {1.0f, 0.0f} },
+            {{-0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 1.0, 0.0f}, {0.0f, 0.0f}},
     };
 
     uint16_t indices[] = {
