@@ -4,6 +4,8 @@
 #include <string.h>
 #include <assert.h>
 
+static SDL_Window* window;
+
 static ivec2 mouseMotion = {0, 0};
 static char isMousePressed = 0;
 static uint32_t mouseWheelScroll = 0;
@@ -14,8 +16,10 @@ static uint8_t justPressedMouseButtons = 0;
 static uint64_t justPressedKeys[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 static uint64_t keys[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-void VE_Input_Init() {
+static VE_MouseMode mouseMode = VE_MOUSEMODE_NORMAL;
 
+void VE_Input_Init(SDL_Window *_window) {
+    window = _window;
 }
 
 void VE_Input_Event(SDL_Event *pEvent) {
@@ -82,4 +86,29 @@ char VE_Input_IsKeyPressed(SDL_Scancode scancode) {
 char VE_Input_IsKeyJustPressed(SDL_Scancode scancode) {
     assert(scancode < SDL_NUM_SCANCODES);
     return !!(justPressedKeys[scancode / 64] & (1ull << (scancode % 64)));
+}
+
+void VE_Input_SetMouseMode(VE_MouseMode _mouseMode) {
+    mouseMode = _mouseMode;
+    assert(mouseMode >= VE_MOUSEMODE_NORMAL && mouseMode < VE_MOUSEMODE_MAX);
+
+    switch (mouseMode) {
+    case VE_MOUSEMODE_NORMAL:
+        SDL_SetWindowMouseGrab(window, SDL_FALSE);
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        break;
+    case VE_MOUSEMODE_LOCKED:
+        SDL_SetWindowMouseGrab(window, SDL_TRUE);
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        break;
+    case VE_MOUSEMODE_RELATIVE:
+        SDL_SetWindowMouseGrab(window, SDL_FALSE);
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+        break;
+    }
+
+}
+
+VE_MouseMode VE_Input_GetMouseMode() {
+    return mouseMode;
 }

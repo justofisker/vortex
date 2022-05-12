@@ -5,6 +5,7 @@
 #include "../render/render.h"
 #include "../input/input.h"
 #include <cglm/cglm.h>
+#include <math.h>
 
 uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
@@ -102,7 +103,7 @@ VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
 void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_FlyCam *pFlyCam = pData;
 	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
-	if (pTransform) {
+	if (pTransform && VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
 		vec3 forwardVec = GLM_VEC3_ZERO_INIT;
 		glm_vec3_copy(pTransform->_matrix[2], forwardVec);
 		glm_vec3_negate(forwardVec);
@@ -127,8 +128,10 @@ void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 
 		ivec2 mouseMotion = { 0, 0 };
 		VE_Input_GetMouseMotion(mouseMotion);
-		pTransform->rotation[1] -= (float)mouseMotion[0] * pFlyCam->mouseSensitivity;
+		pTransform->rotation[1] -= fmodf((float)mouseMotion[0] * pFlyCam->mouseSensitivity, 2.0f * GLM_PI_2f);
 		pTransform->rotation[0] -= (float)mouseMotion[1] * pFlyCam->mouseSensitivity;
+		if (pTransform->rotation[0] > GLM_PI_2f) pTransform->rotation[0] = GLM_PI_2f;
+		else if (pTransform->rotation[0] < -GLM_PI_2f) pTransform->rotation[0] = -GLM_PI_2f;
 		pTransform->_update = 1;
 	}
 }
