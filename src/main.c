@@ -18,7 +18,8 @@ int main(int argc, char *argv[]) {
 
     SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
-    VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
+    VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("shaders/material.vert.spv", "shaders/material.frag.spv");
+    VE_ProgramT* pEnvironmentSphereProgram = VE_Render_CreateProgram("shaders/environment_sphere.vert.spv", "shaders/environment_sphere.frag.spv");
     VE_TextureT *pTexture = VE_Render_LoadTexture("texture.jpg", NULL);
     VE_TextureT *pEnvironment = VE_Render_LoadTexture("environment.hdr", NULL);
 
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
     VE_SetupBuiltinComponents();
 
     VE_EntityHandleT entTest = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner(pTriangleProgram, pTexture));
+    VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner(pMaterialProgram, pTexture));
     VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
 
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
@@ -40,19 +41,19 @@ int main(int argc, char *argv[]) {
 
     VE_EntityHandleT entPlane = VE_ECS_CreateEntity();
     VE_ECS_InsertComponent(entPlane, VE_NewTransform(GLM_VEC3_ZERO, GLM_VEC3_ZERO, GLM_VEC3_ONE));
-    VE_ECS_InsertComponent(entPlane, VE_NewMesh(VE_Render_CreatePlaneMesh(1.0f, 1.0f, pTriangleProgram)));
+    VE_ECS_InsertComponent(entPlane, VE_NewMesh(VE_Render_CreatePlaneMesh(1.0f, 1.0f, pMaterialProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entPlane, VE_MeshID))->pMeshObject, pTexture);
     VE_ECS_InsertComponent(entPlane, VE_NewSoundPlayer(audio, 1.0, 1.0, 1));
     VE_PlaySoundPlayer(VE_ECS_GetComponent(entPlane, VE_SoundPlayerID));
 
     VE_EntityHandleT entCylinder = VE_ECS_CreateEntity();
     VE_ECS_InsertComponent(entCylinder, VE_NewTransform((vec3){0.0f, -2.0f, 0.0f}, GLM_VEC3_ZERO, GLM_VEC3_ONE));
-    VE_ECS_InsertComponent(entCylinder, VE_NewMesh(VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pTriangleProgram)));
+    VE_ECS_InsertComponent(entCylinder, VE_NewMesh(VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pMaterialProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entCylinder, VE_MeshID))->pMeshObject, pTexture);
 
     VE_EntityHandleT entSphere = VE_ECS_CreateEntity();
     VE_ECS_InsertComponent(entSphere, VE_NewTransform((vec3) { 0.0f, 0.0f, 0.0f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
-    VE_ECS_InsertComponent(entSphere, VE_NewMesh(VE_Render_CreateUVSphereMesh(-128.0, 32, 64, pTriangleProgram)));
+    VE_ECS_InsertComponent(entSphere, VE_NewMesh(VE_Render_CreateUVSphereMesh(-128.0, 32, 64, pEnvironmentSphereProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(entSphere, VE_MeshID))->pMeshObject, pEnvironment);
 
     char running = 1;
@@ -114,7 +115,8 @@ int main(int argc, char *argv[]) {
 
     VE_Render_DestroyTexture(pEnvironment);
     VE_Render_DestroyTexture(pTexture);
-    VE_Render_DestroyProgram(pTriangleProgram);
+    VE_Render_DestroyProgram(pEnvironmentSphereProgram);
+    VE_Render_DestroyProgram(pMaterialProgram);
     VE_Render_Destroy();
     return 0;
 }
