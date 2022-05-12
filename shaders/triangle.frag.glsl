@@ -9,8 +9,10 @@ layout(location = 2) in vec3 fragNorm;
 layout(location = 0) out vec4 outColor;
 
 const vec3 sun_dir = normalize(vec3(1.0, 2.0, 0.75));
+const vec3 sun_color = vec3(1.0);
 
 void main() {
     float light_atten = clamp(dot(fragNorm, sun_dir), 0.1, 1.0);
-    outColor = texture(texSampler, fragTexCoord) * light_atten;
+    vec3 lighting = sun_color * light_atten;
+    outColor = texture(texSampler, fragTexCoord) * vec4(lighting, 1.0);
 }
