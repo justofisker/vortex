@@ -7,6 +7,7 @@
 #include "ecs/ecs.h"
 #include "ecs/builtin.h"
 #include "audio/audio.h"
+#include "input/input.h"
 
 #include <cglm/cglm.h>
 
@@ -77,9 +78,8 @@ int main(int argc, char *argv[]) {
                     }
                     break;
             }
+            VE_Input_Event(&event);
         }
-
-
 
         ((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
         //((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->_update = 1;
@@ -101,6 +101,8 @@ int main(int argc, char *argv[]) {
         while (SDL_GetTicks64() < last + 2) {
 
         }
+
+        VE_Input_EndFrame();
 
         last = SDL_GetTicks64();
     }
