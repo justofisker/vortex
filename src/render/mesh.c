@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "texture.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -233,12 +234,36 @@ VE_MeshObject_T *VE_Render_CreateUVSphereMesh(float radius, uint32_t rings, uint
     return VE_Render_CreateMeshObject(pVertices, n_vertices, pIndices, n_indices, pProgram);
 }
 
-VE_ImportedModel_T VE_Render_ImportMesh(const char *pFilePath, VE_ProgramT *pProgram) {
+VE_ImportedModel_T VE_Render_ImportModel(const char *pFilePath, VE_ProgramT *pProgram) {
     const struct aiScene *pScene = aiImportFile(pFilePath, aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
-    VE_ImportedModel_T importedModel = { NULL, 0 };
+    VE_ImportedModel_T importedModel = { NULL, 0, NULL, 0 };
     
     if (pScene) {
+        importedModel.numTextures = pScene->mNumMaterials;
+        importedModel.textures = malloc(sizeof(VE_TextureT *) * importedModel.numTextures);
+        for (uint32_t i = 0; i < importedModel.numTextures; i++) {
+            importedModel.textures[i] = NULL;
+            struct aiMaterial *pMaterial = pScene->mMaterials[i];
+            struct aiString texPath;
+            if (aiGetMaterialString(pMaterial, AI_MATKEY_TEXTURE_DIFFUSE(0), &texPath) == aiReturn_SUCCESS) {
+                uint32_t pathEnd = 0;
+                char c = pFilePath[0];
+                uint32_t j = 0;
+                while (c != '\0') {
+                    if (c == '/' || c == '\\') {
+                        pathEnd = j;
+                    }
+                    c = pFilePath[j];
+                    j++;
+                }
+                char *pTexPath = malloc(pathEnd + texPath.length + 1);
+                memcpy(pTexPath, pFilePath, pathEnd);
+                memcpy(pTexPath + pathEnd, texPath.data, texPath.length + 1);
+                importedModel.textures[i] = VE_Render_LoadTexture(pTexPath, NULL);
+            }
+        }
+
         importedModel.numMeshes = pScene->mNumMeshes;
         importedModel.meshes = malloc(sizeof(VE_MeshObject_T *) * importedModel.numMeshes);
         for (uint32_t i = 0; i < importedModel.numMeshes; i++) {
@@ -268,17 +293,30 @@ VE_ImportedModel_T VE_Render_ImportMesh(const char *pFilePath, VE_ProgramT *pPro
             for (uint32_t j = 0; j < pAiMesh->mNumFaces; j++) {
                 pIndices[j * 3] = pAiMesh->mFaces[j].mIndices[0];
                 pIndices[j * 3 + 1] = pAiMesh->mFaces[j].mIndices[1];
-                pIndices[j * 3 + 1] = pAiMesh->mFaces[j].mIndices[2];
+                pIndices[j * 3 + 2] = pAiMesh->mFaces[j].mIndices[2];
             }
 
-            struct aiMaterial *pMaterial = pScene->mMaterials[pAiMesh->mMaterialIndex];
-
             VE_MeshObject_T *pMesh = VE_Render_CreateMeshObject(pVertices, pAiMesh->mNumVertices, pIndices, pAiMesh->mNumFaces * 3, pProgram);
+
+            if (importedModel.textures[pAiMesh->mMaterialIndex]) {
+                VE_Render_SetMeshObjectTexture(pMesh, importedModel.textures[pAiMesh->mMaterialIndex]);
+            }
+
             importedModel.meshes[i] = pMesh;
         }
     }
 
     return importedModel;
+}
+
+void VE_Render_DestroyImportedModel(VE_ImportedModel_T model) {
+    for (int i = 0; i < model.numTextures; i++) {
+        if (model.textures[i]) {
+            VE_Render_DestroyTexture(model.textures[i]);
+        }
+    }
+    free(model.textures);
+    free(model.meshes);
 }
 
 void VE_Render_UpdateMeshUniformBuffer(VE_MeshObject_T *pMeshObject, mat4 modelMatrix) {

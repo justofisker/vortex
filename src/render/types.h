@@ -76,6 +76,8 @@ typedef struct VE_MeshObject_T {
 typedef struct VE_ImportedModel_T {
     VE_MeshObject_T **meshes;
     uint32_t numMeshes;
+    VE_TextureT **textures;
+    uint32_t numTextures;
 } VE_ImportedModel_T;
 
 #endif //RENDER_TYPES_H

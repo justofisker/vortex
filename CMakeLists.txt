@@ -117,6 +117,8 @@ add_subdirectory("extern/openal-soft")
 
 add_subdirectory("extern/assimp")
 
+file(COPY "assets" DESTINATION ".")
+
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)
 elseif (DEFINED ENV{VULKAN_SDK})

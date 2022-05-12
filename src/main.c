@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
     VE_Render_Init(window);
     VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("shaders/material.vert.spv", "shaders/material.frag.spv");
     VE_ProgramT* pEnvironmentSphereProgram = VE_Render_CreateProgram("shaders/environment_sphere.vert.spv", "shaders/environment_sphere.frag.spv");
-    VE_TextureT *pTexture = VE_Render_LoadTexture("texture.jpg", NULL);
-    VE_TextureT *pEnvironment = VE_Render_LoadTexture("environment.hdr", NULL);
+    VE_TextureT *pTexture = VE_Render_LoadTexture("assets/textures/texture.png", NULL);
+    VE_TextureT *pEnvironment = VE_Render_LoadTexture("assets/textures/environment.hdr", NULL);
 
     VE_Input_Init(window);
 
@@ -27,12 +27,12 @@ int main(int argc, char *argv[]) {
 
     VE_Audio_Init();
 
-    ALuint audio = VE_Audio_LoadSound("music.ogg");
+    ALuint audio = VE_Audio_LoadSound("assets/sound/music.ogg");
 
     VE_SetupBuiltinComponents();
 
     VE_EntityHandleT entTest = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner(pMaterialProgram, pTexture));
+    //VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner(pMaterialProgram, pTexture));
     VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
 
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
@@ -57,6 +57,14 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entSphere, VE_NewTransform((vec3) { 0.0f, 0.0f, 0.0f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
     VE_ECS_InsertComponent(entSphere, VE_NewMesh(VE_Render_CreateUVSphereMesh(-128.0, 32, 64, pEnvironmentSphereProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(entSphere, VE_MeshID))->pMeshObject, pEnvironment);
+
+
+    VE_ImportedModel_T importedModel = VE_Render_ImportModel("assets/models/testModel.obj", pMaterialProgram);
+    VE_EntityHandleT entTestModel = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entTestModel, VE_NewTransform((vec3) { 0.0f, -8.0f, 0.0f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+    for (int i = 0; i < importedModel.numMeshes; i++) {
+        VE_ECS_InsertComponent(entTestModel, VE_NewMesh(importedModel.meshes[i]));
+    }
 
     char running = 1;
     char minimized = 0;
@@ -117,6 +125,8 @@ int main(int argc, char *argv[]) {
     }
 
     VE_ECS_DestroyScene();
+
+    VE_Render_DestroyImportedModel(importedModel);
 
     VE_Audio_DestroySound(audio);
 
