@@ -54,7 +54,7 @@ VE_MeshObject_T *VE_Render_CreateCylinderMesh(int vertex_count, float radius, fl
         pVertices[i + side_vertex_count * 2].position[0] = x;
         pVertices[i + side_vertex_count * 2].position[1] = -.5f * depth;
         pVertices[i + side_vertex_count * 2].position[2] = y;
-        pVertices[i + side_vertex_count * 2].texCoord[0] = x_unscaled * 0.5f + 0.5f;
+        pVertices[i + side_vertex_count * 2].texCoord[0] = 1.0f - (x_unscaled * 0.5f + 0.5f);
         pVertices[i + side_vertex_count * 2].texCoord[1] = y_unscaled * 0.5f + 0.5f;
         pVertices[i + side_vertex_count * 2].normal[0] = 0.0f;
         pVertices[i + side_vertex_count * 2].normal[1] = -1.0f;
@@ -129,10 +129,10 @@ VE_MeshObject_T *VE_Render_CreateCylinderMesh(int vertex_count, float radius, fl
 
 VE_MeshObject_T *VE_Render_CreatePlaneMesh(float width, float height, VE_ProgramT *pProgram) {
     VE_VertexT vertices[] = {
-            {{-0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 1.0f}},
-            {{0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 1.0f}},
-            {{0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 0.0f} },
-            {{-0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 0.0f}},
+            {{-0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 1.0f}},
+            {{0.5f * width, 0.0f, 0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 1.0f}},
+            {{0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {1.0f, 0.0f} },
+            {{-0.5f * width, 0.0f, -0.5f * height}, GLM_VEC3_ONE_INIT, {0.0, 0.0, 1.0f}, {0.0f, 0.0f}},
     };
 
     uint16_t indices[] = {
