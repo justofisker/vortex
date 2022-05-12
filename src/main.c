@@ -14,14 +14,16 @@
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_SetRelativeMouseMode(true);
-
     SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
     VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("shaders/material.vert.spv", "shaders/material.frag.spv");
     VE_ProgramT* pEnvironmentSphereProgram = VE_Render_CreateProgram("shaders/environment_sphere.vert.spv", "shaders/environment_sphere.frag.spv");
     VE_TextureT *pTexture = VE_Render_LoadTexture("texture.jpg", NULL);
     VE_TextureT *pEnvironment = VE_Render_LoadTexture("environment.hdr", NULL);
+
+    VE_Input_Init(window);
+
+    VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
 
     VE_Audio_Init();
 
@@ -83,6 +85,13 @@ int main(int argc, char *argv[]) {
                     break;
             }
             VE_Input_Event(&event);
+        }
+
+        if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
+            if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE)
+                VE_Input_SetMouseMode(VE_MOUSEMODE_NORMAL);
+            else
+                VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
         }
 
         ((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
