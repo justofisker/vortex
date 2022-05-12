@@ -81,7 +81,6 @@ endif (UNIX)
 
 add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
 
-
 if (WIN32)
     set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 elseif (APPLE)
@@ -97,7 +96,7 @@ option(BUILD_SHARED_LIBS "" ON)
 add_subdirectory("extern/SDL2")
 
 option(CGLM_SHARED "Shared build" OFF)
-option(CGLM_STATIC "Static build" ON)
+option(CGLM_STATIC "Static build" OFF)
 option(CGLM_USE_C99 "" OFF)
 option(CGLM_USE_TEST "Enable Tests" OFF)
 add_subdirectory("extern/cglm/")
