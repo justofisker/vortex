@@ -81,7 +81,7 @@ void VE_Render_DestroyTexture(VE_TextureT *pTexture) {
     vkDestroyImage(VE_G_Device, pTexture->image, NULL);
 }
 
-VkImage VE_Render_CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memoryProperties, VkImage *pImage, VkDeviceMemory *pDeviceMemory) {
+void VE_Render_CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memoryProperties, VkImage *pImage, VkDeviceMemory *pDeviceMemory) {
     VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
     imageInfo.extent.width = width;
