@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <SDL.h>
 
 uint32_t VE_ECS_RegisterComponent(const char *pComponentName, uint32_t componentSize, ComponentUpdateSystem componentUpdateSystem, ComponentDestroySystem componentDestroySystem) {
 	if (VE_G_ComponentCount >= VE_ECS_COMPONENT_MAX) {
@@ -109,6 +110,10 @@ VE_EntityHandleT VE_ECS_CreateEntity() {
 }
 
 void VE_ECS_UpdateScene() {
+	uint32_t now = SDL_GetTicks();
+	VE_G_DeltaMilliseconds = now - VE_G_LastTick;
+	VE_G_LastTick = now;
+	VE_G_DeltaSeconds = VE_G_DeltaMilliseconds / 1000.0f;
 	for (uint32_t i = 0; i < VE_G_CurrentScene.entityCount; i++) {
 		uint32_t offset = 0;
 		for (uint32_t j = 0; j < VE_G_CurrentScene.pEntities[i].componentCount; j++) {

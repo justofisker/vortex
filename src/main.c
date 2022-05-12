@@ -82,13 +82,9 @@ int main(int argc, char *argv[]) {
         }
 
         ((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->position[0] = SDL_sinf(SDL_GetTicks() / 1000.0f);
-        //((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->_update = 1;
+        ((VE_Transform*) VE_ECS_GetComponent(entPlane, VE_TransformID))->_update = 1;
         ((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->rotation[2] = SDL_GetTicks() / 1000.0f;
-        //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
-        ((VE_Transform *)VE_ECS_GetComponent(entSphere, VE_TransformID))->rotation[1] = SDL_GetTicks() / 1000.0f;
-        //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
-        ((VE_Transform *)VE_ECS_GetComponent(entSphere, VE_TransformID))->rotation[2] = SDL_GetTicks() / 2000.0f;
-        //((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
+        ((VE_Transform*) VE_ECS_GetComponent(entCylinder, VE_TransformID))->_update = 1;
 
         // Tick
         VE_ECS_UpdateScene();

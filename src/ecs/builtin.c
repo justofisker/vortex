@@ -105,13 +105,7 @@ void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
     VE_Mesh *pMesh = pData;
     VE_Transform *transform = (VE_Transform*) VE_ECS_GetComponent(entityHandle, VE_TransformID);
     if (transform) {
-        mat4 newMatrix = GLM_MAT4_IDENTITY_INIT;
-        glm_translate(newMatrix, transform->position);
-		glm_rotate(newMatrix, transform->rotation[2], GLM_ZUP);
-        glm_rotate(newMatrix, transform->rotation[1], GLM_YUP);
-		glm_rotate(newMatrix, transform->rotation[0], GLM_XUP);
-        glm_scale(newMatrix, transform->scale);
-        VE_Render_UpdateMeshUniformBuffer(pMesh->pMeshObject, newMatrix);
+        VE_Render_UpdateMeshUniformBuffer(pMesh->pMeshObject, transform->_matrix);
     }
 }
 
@@ -158,14 +152,11 @@ void VE_AudioListener_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	if (transform) {
 		VE_Audio_SetListenerPosition(transform->position);
 
-		vec3 forwardVec = { 0.0, 0.0, -1.0 };
-		glm_vec3_rotate(forwardVec, transform->rotation[2], GLM_ZUP);
-		glm_vec3_rotate(forwardVec, transform->rotation[1], GLM_YUP);
-		glm_vec3_rotate(forwardVec, transform->rotation[0], GLM_XUP);
-		vec3 upVec = { 0.0, 1.0, 0.0 };
-		glm_vec3_rotate(upVec, transform->rotation[2], GLM_ZUP);
-		glm_vec3_rotate(upVec, transform->rotation[1], GLM_YUP);
-		glm_vec3_rotate(upVec, transform->rotation[0], GLM_XUP);
+		vec3 forwardVec = { 0.0, 0.0, 0.0 };
+		glm_vec3_copy(transform->_matrix[2], forwardVec);
+		glm_vec3_negate(forwardVec);
+		vec3 upVec = { 0.0, 0.0, 0.0 };
+		glm_vec3_copy(transform->_matrix[1], upVec);
 		
 		VE_Audio_SetListenerOrientation(forwardVec, upVec);
 	}
