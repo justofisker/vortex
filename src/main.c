@@ -14,6 +14,8 @@
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
 
+    SDL_SetRelativeMouseMode(true);
+
     SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
     VE_ProgramT *pTriangleProgram = VE_Render_CreateProgram("shaders/triangle.vert.spv", "shaders/triangle.frag.spv");
@@ -31,6 +33,7 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entTest, VE_NewTransform((vec3) {1.0f, 0.0f, 0.0f }, (vec3) {0.0f, 0.0f, 0.0f }, (vec3) {1.0f, 1.0f, 1.0f }));
 
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entCamera, VE_NewFlyCam(2.0, 0.001));
     VE_ECS_InsertComponent(entCamera, VE_NewTransform((vec3) { 2.0, 2.0, 2.0 }, (vec3) { glm_rad(-45.0), glm_rad(45.0), 0.0 }, GLM_VEC3_ONE));
     VE_ECS_InsertComponent(entCamera, VE_NewCamera(glm_rad(60.0), 0.1, 256.0));
     VE_ECS_InsertComponent(entCamera, VE_NewAudioListener());

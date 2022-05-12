@@ -51,6 +51,14 @@ typedef struct VE_Camera {
 extern uint32_t VE_CameraID;
 VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane);
 
+typedef struct VE_FlyCam {
+	uint32_t id;
+	float moveSpeed;
+	float mouseSensitivity;
+} VE_FlyCam;
+extern uint32_t VE_FlyCamID;
+VE_FlyCam *VE_NewFlyCam(float moveSpeed, float mouseSensitivity);
+
 typedef struct VE_SoundPlayer {
 	uint32_t _id;
 	ALuint source;

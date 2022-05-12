@@ -1,7 +1,9 @@
 #include "builtin.h"
 #include "ecs.h"
+#include "globals.h"
 #include "../render/mesh.h"
 #include "../render/render.h"
+#include "../input/input.h"
 #include <cglm/cglm.h>
 
 uint32_t VE_TestComponentID = 0;
@@ -11,6 +13,7 @@ uint32_t VE_SoundPlayerID = 0;
 uint32_t VE_AudioListenerID = 0;
 uint32_t VE_MeshID = 0;
 uint32_t VE_CameraID = 0;
+uint32_t VE_FlyCamID = 0;
 
 void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_TestComponent* component = (VE_TestComponent *)pData;
@@ -22,6 +25,7 @@ void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
 	if (pTransform) {
 		pTransform->position[1] = 2.0 - component->counter * 0.1f;
+		pTransform->_update = 1;
 	}
 }
 
@@ -92,6 +96,46 @@ void VE_Camera_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
 	VE_Camera *pComponent = malloc(sizeof(VE_Camera));
 	*pComponent = (VE_Camera){ VE_CameraID, fov, nearPlane, farPlane };
+	return pComponent;
+}
+
+void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
+	VE_FlyCam *pFlyCam = pData;
+	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
+	if (pTransform) {
+		vec3 forwardVec = GLM_VEC3_ZERO_INIT;
+		glm_vec3_copy(pTransform->_matrix[2], forwardVec);
+		glm_vec3_negate(forwardVec);
+		vec3 rightVec = GLM_VEC3_ZERO_INIT;
+		glm_vec3_copy(pTransform->_matrix[0], rightVec);
+		float moveSpeed = pFlyCam->moveSpeed * VE_G_DeltaSeconds;
+		glm_vec3_scale(forwardVec, moveSpeed, forwardVec);
+		glm_vec3_scale(rightVec, moveSpeed, rightVec);
+		
+		if (VE_Input_IsKeyPressed(SDL_SCANCODE_W)) {
+			glm_vec3_add(pTransform->position, forwardVec, pTransform->position);
+		}
+		if (VE_Input_IsKeyPressed(SDL_SCANCODE_S)) {
+			glm_vec3_sub(pTransform->position, forwardVec, pTransform->position);
+		}
+		if (VE_Input_IsKeyPressed(SDL_SCANCODE_D)) {
+			glm_vec3_add(pTransform->position, rightVec, pTransform->position);
+		}
+		if (VE_Input_IsKeyPressed(SDL_SCANCODE_A)) {
+			glm_vec3_sub(pTransform->position, rightVec, pTransform->position);
+		}
+
+		ivec2 mouseMotion = { 0, 0 };
+		VE_Input_GetMouseMotion(mouseMotion);
+		pTransform->rotation[1] -= (float)mouseMotion[0] * pFlyCam->mouseSensitivity;
+		pTransform->rotation[0] -= (float)mouseMotion[1] * pFlyCam->mouseSensitivity;
+		pTransform->_update = 1;
+	}
+}
+
+VE_FlyCam *VE_NewFlyCam(float moveSpeed, float mouseSensitivity) {
+	VE_FlyCam *pComponent = malloc(sizeof(VE_FlyCam));
+	*pComponent = (VE_FlyCam){ VE_FlyCamID, moveSpeed, mouseSensitivity };
 	return pComponent;
 }
 
@@ -176,4 +220,5 @@ void VE_SetupBuiltinComponents() {
 	VE_MeshID = VE_ECS_RegisterComponent("Mesh", sizeof(VE_Mesh), VE_Mesh_UpdateSystem, VE_Mesh_DeleteSystem);
 	VE_SoundPlayerID = VE_ECS_RegisterComponent("SoundPlayer", sizeof(VE_SoundPlayer), VE_SoundPlayer_UpdateSystem, VE_SoundPlayer_DestroySystem);
 	VE_AudioListenerID = VE_ECS_RegisterComponent("AudioListener", sizeof(VE_AudioListener), VE_AudioListener_UpdateSystem, NULL);
+	VE_FlyCamID = VE_ECS_RegisterComponent("FlyCam", sizeof(VE_FlyCam), VE_FlyCam_UpdateSystem, NULL);
 }
