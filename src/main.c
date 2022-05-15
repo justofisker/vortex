@@ -94,9 +94,6 @@ int main(int argc, char *argv[]) {
             }
             VE_Input_Event(&event);
         }
-        ivec2 mouseMotion;
-        VE_Input_GetMousePosition(mouseMotion);
-        printf("%d\t%d\n", mouseMotion[0], mouseMotion[1]);
 
         if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
             if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
