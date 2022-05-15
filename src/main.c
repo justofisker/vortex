@@ -94,11 +94,17 @@ int main(int argc, char *argv[]) {
             }
             VE_Input_Event(&event);
         }
+        ivec2 mouseMotion;
+        VE_Input_GetMousePosition(mouseMotion);
+        printf("%d\t%d\n", mouseMotion[0], mouseMotion[1]);
 
         if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
-            if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE)
+            if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
                 VE_Input_SetMouseMode(VE_MOUSEMODE_NORMAL);
-            else
+                ivec2 gameSize;
+                VE_Render_GetGameSize(gameSize);
+                VE_Input_SetMousePosition(gameSize[0] / 2, gameSize[1] / 2);
+            } else
                 VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
         }
 

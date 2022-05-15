@@ -61,6 +61,16 @@ void VE_Input_GetMouseMotion(ivec2 _mouseMotion) {
     _mouseMotion[1] = mouseMotion[1];
 }
 
+void VE_Input_GetMousePosition(ivec2 mousePosition)
+{
+    SDL_GetMouseState(&mousePosition[0], &mousePosition[1]);
+}
+
+void VE_Input_SetMousePosition(int x, int y)
+{
+    SDL_WarpMouseInWindow(window, x, y);
+}
+
 char VE_Input_IsLeftMousePressed() {
     return !!(mouseButtons & SDL_BUTTON_LMASK);
     

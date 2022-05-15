@@ -9,6 +9,8 @@ void VE_Input_Event(SDL_Event *pEvent);
 void VE_Input_EndFrame();
 
 void VE_Input_GetMouseMotion(ivec2 mouseMotion);
+void VE_Input_GetMousePosition(ivec2 mousePosition);
+void VE_Input_SetMousePosition(int x, int y);
 char VE_Input_IsLeftMousePressed();
 char VE_Input_IsRightMousePressed();
 char VE_Input_IsLeftMouseJustPressed();

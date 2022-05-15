@@ -21,4 +21,6 @@ void VE_Render_UnregisterEntity(VE_MeshObject_T *pMeshObject);
 void VE_Render_SetProjectionMatrix(mat4 projectionMatrix);
 void VE_Render_SetViewMatrix(mat4 viewMatrix);
 
+void VE_Render_GetGameSize(ivec2 gameSize);
+
 #endif // RENDER_RENDER_H
