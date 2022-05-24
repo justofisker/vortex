@@ -25,6 +25,8 @@ endForeach()
 
 add_executable(vortex
         "src/main.c"
+        "src/vortex.c"
+        "src/vortex.h"
         "src/render/render.c"
         "src/render/render.h"
         "src/render/init.c"

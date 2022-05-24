@@ -102,6 +102,12 @@ VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
 
 void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_FlyCam *pFlyCam = pData;
+	if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
+		if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE)
+			VE_Input_SetMouseMode(VE_MOUSEMODE_NORMAL);
+		else
+			VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
+	}
 	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
 	if (pTransform && VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
 		vec3 forwardVec = GLM_VEC3_ZERO_INIT;
