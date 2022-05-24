@@ -202,3 +202,9 @@ void VE_Render_SetProjectionMatrix(mat4 projectionMatrix) {
 void VE_Render_SetViewMatrix(mat4 viewMatrix) {
     glm_mat4_copy(viewMatrix, VE_G_ViewMatrix);
 }
+
+void VE_Render_GetGameSize(ivec2 gameSize)
+{
+    gameSize[0] = VE_G_SwapchainExtent.width;
+    gameSize[1] = VE_G_SwapchainExtent.height;
+}
