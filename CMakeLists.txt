@@ -69,16 +69,9 @@ target_include_directories(vortex PRIVATE
         )
 
 target_link_libraries(vortex PRIVATE
-        SDL2
-        SDL2main
         volk
         cglm
         spirv-reflect-static
-        OpenAL
-        ogg
-        vorbis
-        vorbisfile
-        assimp
         )
 
 if (UNIX)
@@ -99,8 +92,6 @@ add_subdirectory("extern/volk")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 option(BUILD_SHARED_LIBS "" ON)
 
-add_subdirectory("extern/SDL2")
-
 option(CGLM_SHARED "Shared build" OFF)
 option(CGLM_STATIC "Static build" OFF)
 option(CGLM_USE_C99 "" OFF)
@@ -112,64 +103,86 @@ option(SPIRV_REFLECT_EXAMPLES       "Build stripper examples" OFF)
 option(SPIRV_REFLECT_STATIC_LIB     "Build a SPIRV-Reflect static library" ON)
 add_subdirectory("extern/SPIRV-Reflect")
 
-add_subdirectory("extern/ogg")
-add_subdirectory("extern/vorbis")
+if (UNIX)
+    target_link_libraries(vortex PUBLIC
+        SDL2
+        openal
+        ogg
+        vorbis
+        vorbisfile
+        assimp
+        )
+elseif (WIN32)
+    target_link_libraries(vortex PRIVATE
+        SDL2
+        OpenAL
+        ogg
+        vorbis
+        vorbisfile
+        assimp
+        )
 
-option(ALSOFT_EXAMPLES  "Build example programs"  OFF)
-option(ALSOFT_UTILS "Build utility programs"  OFF)
-option(ALSOFT_NO_CONFIG_UTIL "Disable building the alsoft-config utility" ON)
-add_subdirectory("extern/openal-soft")
+    add_subdirectory("extern/SDL2")
 
-set(ASSIMP_BUILD_AMF_IMPORTER OFF)
-set(ASSIMP_BUILD_3DS_IMPORTER OFF)
-set(ASSIMP_BUILD_AC_IMPORTER OFF)
-set(ASSIMP_BUILD_ASE_IMPORTER OFF)
-set(ASSIMP_BUILD_ASSBIN_IMPORTER OFF)
-set(ASSIMP_BUILD_B3D_IMPORTER OFF)
-set(ASSIMP_BUILD_BVH_IMPORTER OFF)
-set(ASSIMP_BUILD_COLLADA_IMPORTER OFF)
-set(ASSIMP_BUILD_DXF_IMPORTER OFF)
-set(ASSIMP_BUILD_CSM_IMPORTER OFF)
-set(ASSIMP_BUILD_HMP_IMPORTER OFF)
-set(ASSIMP_BUILD_IRRMESH_IMPORTER OFF)
-set(ASSIMP_BUILD_IRR_IMPORTER OFF)
-set(ASSIMP_BUILD_LWO_IMPORTER OFF)
-set(ASSIMP_BUILD_LWS_IMPORTER OFF)
-set(ASSIMP_BUILD_M3D_IMPORTER OFF)
-set(ASSIMP_BUILD_MD2_IMPORTER OFF)
-set(ASSIMP_BUILD_MD3_IMPORTER OFF)
-set(ASSIMP_BUILD_MD5_IMPORTER OFF)
-set(ASSIMP_BUILD_MDC_IMPORTER OFF)
-set(ASSIMP_BUILD_MDL_IMPORTER OFF)
-set(ASSIMP_BUILD_NFF_IMPORTER OFF)
-set(ASSIMP_BUILD_NDO_IMPORTER OFF)
-set(ASSIMP_BUILD_OFF_IMPORTER OFF)
-set(ASSIMP_BUILD_OGRE_IMPORTER OFF)
-set(ASSIMP_BUILD_OPENGEX_IMPORTER OFF)
-set(ASSIMP_BUILD_PLY_IMPORTER OFF)
-set(ASSIMP_BUILD_MS3D_IMPORTER OFF)
-set(ASSIMP_BUILD_COB_IMPORTER OFF)
-set(ASSIMP_BUILD_BLEND_IMPORTER OFF)
-set(ASSIMP_BUILD_IFC_IMPORTER OFF)
-set(ASSIMP_BUILD_XGL_IMPORTER OFF)
-set(ASSIMP_BUILD_FBX_IMPORTER OFF)
-set(ASSIMP_BUILD_Q3D_IMPORTER OFF)
-set(ASSIMP_BUILD_Q3BSP_IMPORTER OFF)
-set(ASSIMP_BUILD_RAW_IMPORTER OFF)
-set(ASSIMP_BUILD_SIB_IMPORTER OFF)
-set(ASSIMP_BUILD_SMD_IMPORTER OFF)
-set(ASSIMP_BUILD_STL_IMPORTER OFF)
-set(ASSIMP_BUILD_TERRAGEN_IMPORTER OFF)
-set(ASSIMP_BUILD_3D_IMPORTER OFF)
-set(ASSIMP_BUILD_X_IMPORTER OFF)
-set(ASSIMP_BUILD_X3D_IMPORTER OFF)
-set(ASSIMP_BUILD_3MF_IMPORTER OFF)
-set(ASSIMP_BUILD_MMD_IMPORTER OFF)
-OPTION(ASSIMP_BUILD_ASSIMP_TOOLS  "If the supplementary tools for Assimp are built in addition to the library."  OFF)
-OPTION(ASSIMP_BUILD_TESTS  "If the test suite for Assimp is built in addition to the library."  OFF)
-OPTION(ASSIMP_INSTALL  "Disable this if you want to use assimp as a submodule."  OFF)
-OPTION(ASSIMP_NO_EXPORT  "Disable Assimp's export functionality."  ON)
-add_subdirectory("extern/assimp")
+    add_subdirectory("extern/ogg")
+    add_subdirectory("extern/vorbis")
+
+    option(ALSOFT_EXAMPLES  "Build example programs"  OFF)
+    option(ALSOFT_UTILS "Build utility programs"  OFF)
+    option(ALSOFT_NO_CONFIG_UTIL "Disable building the alsoft-config utility" ON)
+    add_subdirectory("extern/openal-soft")
+
+    set(ASSIMP_BUILD_AMF_IMPORTER OFF)
+    set(ASSIMP_BUILD_3DS_IMPORTER OFF)
+    set(ASSIMP_BUILD_AC_IMPORTER OFF)
+    set(ASSIMP_BUILD_ASE_IMPORTER OFF)
+    set(ASSIMP_BUILD_ASSBIN_IMPORTER OFF)
+    set(ASSIMP_BUILD_B3D_IMPORTER OFF)
+    set(ASSIMP_BUILD_BVH_IMPORTER OFF)
+    set(ASSIMP_BUILD_COLLADA_IMPORTER OFF)
+    set(ASSIMP_BUILD_DXF_IMPORTER OFF)
+    set(ASSIMP_BUILD_CSM_IMPORTER OFF)
+    set(ASSIMP_BUILD_HMP_IMPORTER OFF)
+    set(ASSIMP_BUILD_IRRMESH_IMPORTER OFF)
+    set(ASSIMP_BUILD_IRR_IMPORTER OFF)
+    set(ASSIMP_BUILD_LWO_IMPORTER OFF)
+    set(ASSIMP_BUILD_LWS_IMPORTER OFF)
+    set(ASSIMP_BUILD_M3D_IMPORTER OFF)
+    set(ASSIMP_BUILD_MD2_IMPORTER OFF)
+    set(ASSIMP_BUILD_MD3_IMPORTER OFF)
+    set(ASSIMP_BUILD_MD5_IMPORTER OFF)
+    set(ASSIMP_BUILD_MDC_IMPORTER OFF)
+    set(ASSIMP_BUILD_MDL_IMPORTER OFF)
+    set(ASSIMP_BUILD_NFF_IMPORTER OFF)
+    set(ASSIMP_BUILD_NDO_IMPORTER OFF)
+    set(ASSIMP_BUILD_OFF_IMPORTER OFF)
+    set(ASSIMP_BUILD_OGRE_IMPORTER OFF)
+    set(ASSIMP_BUILD_OPENGEX_IMPORTER OFF)
+    set(ASSIMP_BUILD_PLY_IMPORTER OFF)
+    set(ASSIMP_BUILD_MS3D_IMPORTER OFF)
+    set(ASSIMP_BUILD_COB_IMPORTER OFF)
+    set(ASSIMP_BUILD_BLEND_IMPORTER OFF)
+    set(ASSIMP_BUILD_IFC_IMPORTER OFF)
+    set(ASSIMP_BUILD_XGL_IMPORTER OFF)
+    set(ASSIMP_BUILD_FBX_IMPORTER OFF)
+    set(ASSIMP_BUILD_Q3D_IMPORTER OFF)
+    set(ASSIMP_BUILD_Q3BSP_IMPORTER OFF)
+    set(ASSIMP_BUILD_RAW_IMPORTER OFF)
+    set(ASSIMP_BUILD_SIB_IMPORTER OFF)
+    set(ASSIMP_BUILD_SMD_IMPORTER OFF)
+    set(ASSIMP_BUILD_STL_IMPORTER OFF)
+    set(ASSIMP_BUILD_TERRAGEN_IMPORTER OFF)
+    set(ASSIMP_BUILD_3D_IMPORTER OFF)
+    set(ASSIMP_BUILD_X_IMPORTER OFF)
+    set(ASSIMP_BUILD_X3D_IMPORTER OFF)
+    set(ASSIMP_BUILD_3MF_IMPORTER OFF)
+    set(ASSIMP_BUILD_MMD_IMPORTER OFF)
+    OPTION(ASSIMP_BUILD_ASSIMP_TOOLS  "If the supplementary tools for Assimp are built in addition to the library."  OFF)
+    OPTION(ASSIMP_BUILD_TESTS  "If the test suite for Assimp is built in addition to the library."  OFF)
+    OPTION(ASSIMP_INSTALL  "Disable this if you want to use assimp as a submodule."  OFF)
+    OPTION(ASSIMP_NO_EXPORT  "Disable Assimp's export functionality."  ON)
+    add_subdirectory("extern/assimp")
+endif (UNIX)
 
 file(COPY "assets" DESTINATION ".")
 
