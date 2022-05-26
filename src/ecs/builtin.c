@@ -103,9 +103,12 @@ VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
 void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	VE_FlyCam *pFlyCam = pData;
 	if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
-		if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE)
-			VE_Input_SetMouseMode(VE_MOUSEMODE_NORMAL);
-		else
+		if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
+            ivec2 gameSize;
+            VE_Render_GetGameSize(gameSize);
+            VE_Input_SetMousePosition(gameSize[0] / 2, gameSize[1] / 2);
+            VE_Input_SetMouseMode(VE_MOUSEMODE_NORMAL);
+        } else
 			VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
 	}
 	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
