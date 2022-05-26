@@ -184,7 +184,8 @@ elseif (WIN32)
     add_subdirectory("extern/assimp")
 endif (UNIX)
 
-file(COPY "assets" DESTINATION ".")
+file(COPY "assets" DESTINATION "${CMAKE_BINARY_DIR}")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/shaders")
 
 if (TARGET Vulkan::Vulkan)
     target_link_libraries(vortex PUBLIC Vulkan::Vulkan)
