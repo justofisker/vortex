@@ -1,3 +1,4 @@
+#define CGLM_ALL_UNALIGNED
 #include "builtin.h"
 #include "ecs.h"
 #include "globals.h"
@@ -6,6 +7,7 @@
 #include "../input/input.h"
 #include <cglm/cglm.h>
 #include <math.h>
+#include <string.h>
 
 uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
@@ -59,7 +61,7 @@ void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, VE_Transform *tran
 		glm_rotate(transform_mat, transform->rotation[1], GLM_YUP);
 		glm_rotate(transform_mat, transform->rotation[0], GLM_XUP);
 		glm_scale(transform_mat, transform->scale);
-        glm_mat4_copy(transform_mat, transform->_matrix); // TODO figure out why this causes SIGSEGV
+        glm_mat4_copy(transform_mat, transform->_matrix);
 		transform->_update = 0;
 	}
 }
