@@ -39,8 +39,6 @@ typedef struct VE_Mesh {
 } VE_Mesh;
 extern uint32_t VE_MeshID;
 VE_Mesh *VE_NewMesh(VE_MeshObject_T* pMeshObject);
-void VE_Mesh_DeleteSystem(void *pData);
-void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData);
 
 typedef struct VE_Camera {
 	uint32_t id;

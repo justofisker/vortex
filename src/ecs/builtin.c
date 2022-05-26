@@ -16,8 +16,7 @@ uint32_t VE_MeshID = 0;
 uint32_t VE_CameraID = 0;
 uint32_t VE_FlyCamID = 0;
 
-void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
-	VE_TestComponent* component = (VE_TestComponent *)pData;
+void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, VE_TestComponent *component) {
 	//printf("Updating component with value %i\n", component->counter);
 	component->counter++;
 	if (component->counter >= component->maxVal) {
@@ -36,9 +35,8 @@ VE_TestComponent *VE_NewTestComponent(int counter, int maxVal) {
 	return pComponent;
 }
 
-void VE_TestComponentSpawner_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
+void VE_TestComponentSpawner_UpdateSystem(VE_EntityHandleT entityHandle, VE_TestComponentSpawner *pSpawner) {
 #define RAND_FLOAT (((float)rand()/(float)(RAND_MAX)) * 2.0 - 1.0)
-	VE_TestComponentSpawner *pSpawner = (VE_TestComponentSpawner *)pData;
 	VE_EntityHandleT newEntity = VE_ECS_CreateEntity();
 	VE_ECS_InsertComponent(newEntity, VE_NewTestComponent(0, 100));
 	
@@ -53,8 +51,7 @@ VE_TestComponentSpawner *VE_NewTestComponentSpawner(VE_ProgramT *pProgram, VE_Te
 	return pComponent;
 }
 
-void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
-	VE_Transform *transform = (VE_Transform *)pData;
+void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, VE_Transform *transform) {
 	if (transform->_update) {
         mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
 		glm_translate(transform_mat, transform->position);
@@ -80,8 +77,7 @@ VE_Transform *VE_NewTransform(vec3 position, vec3 rotation, vec3 scale) {
 	return pComponent;
 }
 
-void VE_Camera_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
-	VE_Camera *pCamera = pData;
+void VE_Camera_UpdateSystem(VE_EntityHandleT entityHandle, VE_Camera *pCamera) {
 	mat4 projectionMatrix = GLM_MAT4_IDENTITY_INIT;
 	glm_perspective(pCamera->fov, VE_Render_GetAspectRatio(), pCamera->nearPlane, pCamera->farPlane, projectionMatrix);
 	projectionMatrix[1][1] *= -1;
@@ -100,8 +96,7 @@ VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
 	return pComponent;
 }
 
-void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
-	VE_FlyCam *pFlyCam = pData;
+void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, VE_FlyCam *pFlyCam) {
 	if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
 		if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
             ivec2 gameSize;
@@ -151,14 +146,12 @@ VE_FlyCam *VE_NewFlyCam(float moveSpeed, float mouseSensitivity) {
 	return pComponent;
 }
 
-void VE_Mesh_DeleteSystem(void *pData) {
-    VE_Mesh *pMesh = pData;
+void VE_Mesh_DeleteSystem(VE_Mesh *pMesh) {
     VE_Render_UnregisterEntity(pMesh->pMeshObject);
     VE_Render_DestroyMeshObject(pMesh->pMeshObject);
 }
 
-void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
-    VE_Mesh *pMesh = pData;
+void VE_Mesh_UpdateSystem(VE_EntityHandleT entityHandle, VE_Mesh *pMesh) {
     VE_Transform *transform = (VE_Transform*) VE_ECS_GetComponent(entityHandle, VE_TransformID);
     if (transform) {
         VE_Render_UpdateMeshUniformBuffer(pMesh->pMeshObject, transform->_matrix);
@@ -172,8 +165,7 @@ VE_Mesh *VE_NewMesh(VE_MeshObject_T *pMeshObject) {
     return pComponent;
 }
 
-void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
-	VE_SoundPlayer *soundPlayer = (VE_SoundPlayer *)pData;
+void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, VE_SoundPlayer *soundPlayer) {
 	VE_Transform *transform = (VE_Transform *)VE_ECS_GetComponent(entityHandle, VE_TransformID);
 	if (transform) {
 		VE_Audio_SetSourceRelative(soundPlayer->source, 0);
@@ -184,8 +176,7 @@ void VE_SoundPlayer_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
 	}
 }
 
-void VE_SoundPlayer_DestroySystem(void *pData) {
-	VE_SoundPlayer *soundPlayer = pData;
+void VE_SoundPlayer_DestroySystem(VE_SoundPlayer *soundPlayer) {
 	VE_Audio_DestroySource(soundPlayer->source);
 }
 
