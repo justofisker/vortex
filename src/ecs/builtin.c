@@ -218,12 +218,12 @@ VE_AudioListener *VE_NewAudioListener() {
 }
 
 void VE_SetupBuiltinComponents() {
-	VE_TestComponentID = VE_ECS_RegisterComponent("TestComponent", sizeof(VE_TestComponent), VE_TestComponent_UpdateSystem, NULL);
-	VE_TestComponentSpawnerID = VE_ECS_RegisterComponent("TestComponentSpawner", sizeof(VE_TestComponentSpawner), VE_TestComponentSpawner_UpdateSystem, NULL);
-	VE_TransformID = VE_ECS_RegisterComponent("Transform", sizeof(VE_Transform), VE_Transform_UpdateSystem, NULL);
-	VE_CameraID = VE_ECS_RegisterComponent("Camera", sizeof(VE_Camera), VE_Camera_UpdateSystem, NULL);
-	VE_MeshID = VE_ECS_RegisterComponent("Mesh", sizeof(VE_Mesh), VE_Mesh_UpdateSystem, VE_Mesh_DeleteSystem);
-	VE_SoundPlayerID = VE_ECS_RegisterComponent("SoundPlayer", sizeof(VE_SoundPlayer), VE_SoundPlayer_UpdateSystem, VE_SoundPlayer_DestroySystem);
-	VE_AudioListenerID = VE_ECS_RegisterComponent("AudioListener", sizeof(VE_AudioListener), VE_AudioListener_UpdateSystem, NULL);
-	VE_FlyCamID = VE_ECS_RegisterComponent("FlyCam", sizeof(VE_FlyCam), VE_FlyCam_UpdateSystem, NULL);
+	VE_TestComponentID = VE_ECS_REGISTER_COMPONENT(VE_TestComponent, VE_TestComponent_UpdateSystem, NULL);
+	VE_TestComponentSpawnerID = VE_ECS_REGISTER_COMPONENT(VE_TestComponentSpawner, VE_TestComponentSpawner_UpdateSystem, NULL);
+	VE_TransformID = VE_ECS_REGISTER_COMPONENT(VE_Transform, VE_Transform_UpdateSystem, NULL);
+	VE_CameraID = VE_ECS_REGISTER_COMPONENT(VE_Camera, VE_Camera_UpdateSystem, NULL);
+	VE_MeshID = VE_ECS_REGISTER_COMPONENT(VE_Mesh, VE_Mesh_UpdateSystem, VE_Mesh_DeleteSystem);
+	VE_SoundPlayerID = VE_ECS_REGISTER_COMPONENT(VE_SoundPlayer, VE_SoundPlayer_UpdateSystem, VE_SoundPlayer_DestroySystem);
+	VE_AudioListenerID = VE_ECS_REGISTER_COMPONENT(VE_AudioListener, VE_AudioListener_UpdateSystem, NULL);
+	VE_FlyCamID = VE_ECS_REGISTER_COMPONENT(VE_FlyCam, VE_FlyCam_UpdateSystem, NULL);
 }
