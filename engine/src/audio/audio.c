@@ -5,12 +5,12 @@
 int VE_Audio_Init() {
 	VE_G_pAudioDevice = alcOpenDevice(0);
 	if (!VE_G_pAudioDevice) {
-		printf("Failed to open audio device.");
+		printf("Failed to open audio device.\n");
 	}
 
 	VE_G_pAudioContext = alcCreateContext(VE_G_pAudioDevice, 0);
 	if (!VE_G_pAudioContext) {
-		printf("Failed to create audio context.");
+		printf("Failed to create audio context.\n");
 	}
 
 	alcMakeContextCurrent(VE_G_pAudioContext);

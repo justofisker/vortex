@@ -1,4 +1,4 @@
-#include "vortex.h"
+#include <vortex.h>
 
 #include <cglm/cglm.h>
 
@@ -25,7 +25,6 @@ void VE_TestSceneComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pDa
 
 int main(int argc, char *argv[]) {
     VE_Init();
-
     uint32_t VE_TestSceneComponentID = VE_ECS_RegisterComponent("TestSceneComponent", sizeof(VE_TestSceneComponent), VE_TestSceneComponent_UpdateSystem, NULL);
 
     VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("shaders/material.vert.spv", "shaders/material.frag.spv");

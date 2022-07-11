@@ -1,24 +1,24 @@
 [submodule "extern/SDL2"]
-	path = extern/SDL2
+	path = engine/extern/SDL2
 	url = https://github.com/libsdl-org/SDL
 [submodule "extern/volk"]
-	path = extern/volk
+	path = engine/extern/volk
 	url = https://github.com/zeux/volk
 [submodule "extern/cglm"]
-	path = extern/cglm
+	path = engine/extern/cglm
 	url = https://github.com/recp/cglm
 [submodule "extern/SPIRV-Reflect"]
-	path = extern/SPIRV-Reflect
+	path = engine/extern/SPIRV-Reflect
 	url = https://github.com/KhronosGroup/SPIRV-Reflect
 [submodule "extern/openal-soft"]
-	path = extern/openal-soft
+	path = engine/extern/openal-soft
 	url = https://github.com/kcat/openal-soft.git
 [submodule "extern/ogg"]
-	path = extern/ogg
+	path = engine/extern/ogg
 	url = https://github.com/xiph/ogg.git
 [submodule "extern/vorbis"]
-	path = extern/vorbis
+	path = engine/extern/vorbis
 	url = https://github.com/xiph/vorbis.git
 [submodule "extern/assimp"]
-	path = extern/assimp
+	path = engine/extern/assimp
 	url = https://github.com/assimp/assimp.git

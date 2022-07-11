@@ -13,7 +13,7 @@ VE_TextureT *VE_Render_LoadTexture(const char *pTexturePath, VE_LoadTextureOptio
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
-        fprintf(stderr, "failed to load image!");
+        fprintf(stderr, "Failed to load image!\n");
         exit(-1);
     }
 
