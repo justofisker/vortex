@@ -9,7 +9,7 @@ char *VE_Util_ReadFile(const char *path, uint32_t *size) {
     file = fopen(path, "rb");
     if(!file)
     {
-        printf("Failed to open %s", path);
+        printf("Failed to open %s\n", path);
         return NULL;
     }
     fseek(file, 0, SEEK_END);
