@@ -259,7 +259,7 @@ void VE_Render_CreateSwapchain() {
                                               pAvailablePresentModes);
     VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
     for (uint32_t i = 0; i < availablePresentModesCount; ++i) {
-        if (pAvailablePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
+        if (pAvailablePresentModes[i] == VK_PRESENT_MODE_FIFO_RELAXED_KHR ) {
             presentMode = pAvailablePresentModes[i];
             break;
         }
