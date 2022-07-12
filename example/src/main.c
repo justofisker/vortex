@@ -1,4 +1,5 @@
-#include <vortex.h>
+#include <vortex/vortex.h>
+#include <vortex/audio.h>
 
 #include <cglm/cglm.h>
 
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
     VE_TextureT *pTexture = VE_Render_LoadTexture("assets/textures/texture.png", NULL);
     VE_TextureT *pEnvironment = VE_Render_LoadTexture("assets/textures/environment.hdr", NULL);
 
-    ALuint audio = VE_Audio_LoadSound("assets/sound/music.ogg");
+    VE_Audio audio = VE_Audio_LoadSound("assets/sound/music.ogg");
 
     VE_EntityHandleT entTest = VE_ECS_CreateEntity();
     //VE_ECS_InsertComponent(entTest, VE_NewTestComponentSpawner(pMaterialProgram, pTexture));

@@ -3,12 +3,10 @@
 
 #include <cglm/types.h>
 #include <AL/al.h>
+#include <vortex/types.h>
 
 int VE_Audio_Init();
 void VE_Audio_Destroy();
-
-ALuint VE_Audio_LoadSound(const char *pFileName);
-void VE_Audio_DestroySound(ALuint sound);
 
 ALuint VE_Audio_CreateSource(ALuint sound);
 void VE_Audio_SetSourcePosition(ALuint source, vec3 position);

@@ -68,7 +68,9 @@ target_include_directories(vortex PRIVATE
         )
 
 target_include_directories(vortex PUBLIC
-    "extern/cglm/include")
+    "extern/cglm/include"
+    "include"
+    )
 
 target_link_libraries(vortex PRIVATE
         volk

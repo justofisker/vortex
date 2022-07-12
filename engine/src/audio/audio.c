@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <AL/al.h>
 #include "audio.h"
+#include <vortex/audio.h>
 #include "globals.h"
 
 int VE_Audio_Init() {
@@ -72,7 +73,7 @@ ALuint VE_Audio_LoadOgg(const char *pFileName) {
 	return buffer;
 }
 
-ALuint VE_Audio_LoadSound(const char *pFileName) {
+VE_Audio VE_Audio_LoadSound(const char *pFileName) {
 	size_t len = strlen(pFileName);
 	const char *pFileExtension = pFileName + (len - 3);
 
@@ -83,7 +84,7 @@ ALuint VE_Audio_LoadSound(const char *pFileName) {
 	return 0;
 }
 
-void VE_Audio_DestroySound(ALuint sound) {
+void VE_Audio_DestroySound(VE_Audio sound) {
 	alDeleteBuffers(1, &sound);
 }
 
