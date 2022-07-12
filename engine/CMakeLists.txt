@@ -25,7 +25,6 @@ endForeach()
 
 add_library(vortex STATIC
         "src/vortex.c"
-        "src/vortex.h"
         "src/render/render.c"
         "src/render/render.h"
         "src/render/init.c"
