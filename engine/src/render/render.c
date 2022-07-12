@@ -10,6 +10,7 @@
 #include <string.h>
 #include "../ecs/ecs.h"
 #include "../ecs/builtin.h"
+#include <cglm/cglm.h>
 
 void VE_Render_Init(SDL_Window *window) {
     VE_G_Window = window;
