@@ -20,3 +20,7 @@ target_include_directories(ExampleVortex PRIVATE
 add_subdirectory("../engine" "${CMAKE_CURRENT_BINARY_DIR}/engine")
 
 file(COPY "assets" DESTINATION "${CMAKE_BINARY_DIR}")
+
+target_compile_options(vortex PUBLIC "-fsanitize=undefined")
+target_compile_options(ExampleVortex PUBLIC "-fsanitize=undefined")
+target_link_options(ExampleVortex PUBLIC "-fsanitize=undefined")
