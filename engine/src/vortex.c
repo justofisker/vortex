@@ -1,14 +1,20 @@
 #include "vortex.h"
 
-void VE_Init() {
+#include <stdio.h>
+
+static SDL_Window *window;
+
+const char *TITLE = "vortex engine";
+
+void VE_Init(const char* title) {
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_Window *window = SDL_CreateWindow("vortex engine - Built at " __DATE__ " " __TIME__, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+    TITLE = title;
+
+    window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     VE_Render_Init(window);
 
     VE_Input_Init(window);
-
-    VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
 
     VE_Audio_Init();
 
@@ -18,7 +24,12 @@ void VE_Init() {
 void VE_Run() {
     char running = 1;
     char minimized = 0;
-    uint64_t last = SDL_GetTicks64();
+    uint64_t last = SDL_GetPerformanceCounter();
+    {
+        char buf[256] = { 0 };
+        snprintf(buf, sizeof(buf) - 1, "%s | fps: %.1f", TITLE, 0.0);
+        SDL_SetWindowTitle(window, buf);
+    }
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -45,19 +56,23 @@ void VE_Run() {
 
         // Tick
         VE_ECS_UpdateScene();
-
-        if (minimized) continue;
-
-        // Render
-        VE_Render_RenderScene();
-
-        while (SDL_GetTicks64() < last + 2) {
-
-        }
-
         VE_Input_EndFrame();
 
-        last = SDL_GetTicks64();
+        if (minimized) SDL_Delay(5);
+        else {
+
+            // Render
+            VE_Render_RenderScene();
+
+            {
+                int fps = 1.0 / ((SDL_GetPerformanceCounter() - last) / (double)SDL_GetPerformanceFrequency());
+                char buf[256] = { 0 };
+                snprintf(buf, sizeof(buf) - 1, "%s | fps: %d", TITLE, fps);
+                SDL_SetWindowTitle(window, buf);
+            }
+        }
+
+        last = SDL_GetPerformanceCounter();
     }
 }
 

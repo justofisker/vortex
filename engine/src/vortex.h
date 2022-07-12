@@ -9,7 +9,7 @@
 #include "audio/audio.h"
 #include "input/input.h"
 
-void VE_Init();
+void VE_Init(const char *title);
 
 void VE_Run();
 
