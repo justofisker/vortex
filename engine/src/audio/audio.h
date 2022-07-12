@@ -1,7 +1,8 @@
 #ifndef AUDIO_AUDIO_H
 #define AUDIO_AUDIO_H
-#include "globals.h"
-#include "cglm/cglm.h"
+
+#include <cglm/types.h>
+#include <AL/al.h>
 
 int VE_Audio_Init();
 void VE_Audio_Destroy();

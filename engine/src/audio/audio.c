@@ -1,16 +1,19 @@
-#include "audio.h"
-#include "vorbis/vorbisfile.h"
+#include <vorbis/vorbisfile.h>
 #include <string.h>
+#include <stdlib.h>
+#include <AL/al.h>
+#include "audio.h"
+#include "globals.h"
 
 int VE_Audio_Init() {
 	VE_G_pAudioDevice = alcOpenDevice(0);
 	if (!VE_G_pAudioDevice) {
-		printf("Failed to open audio device.\n");
+		fprintf(stderr, "Failed to open audio device.\n");
 	}
 
 	VE_G_pAudioContext = alcCreateContext(VE_G_pAudioDevice, 0);
 	if (!VE_G_pAudioContext) {
-		printf("Failed to create audio context.\n");
+		fprintf(stderr, "Failed to create audio context.\n");
 	}
 
 	alcMakeContextCurrent(VE_G_pAudioContext);
@@ -35,7 +38,7 @@ ALuint VE_Audio_LoadOgg(const char *pFileName) {
 	int error = 0;
 
 	if ((error = ov_fopen(pFileName, &vf)) != 0) {
-		printf("Failed to open OGG file. Error: %i\n", error);
+		fprintf(stderr, "Failed to open OGG file. Error: %i\n", error);
 	}
 
 	vorbis_info *vi = ov_info(&vf, -1);
@@ -45,7 +48,7 @@ ALuint VE_Audio_LoadOgg(const char *pFileName) {
 	size_t dataLen = ov_pcm_total(&vf, -1) * vi->channels * 2;
 	short *pcmout = malloc(dataLen);
 	if (!pcmout) {
-		printf("Failed to allocate space for ogg buffer.\n");
+		fprintf(stderr, "Failed to allocate space for ogg buffer.\n");
 		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
@@ -55,7 +58,7 @@ ALuint VE_Audio_LoadOgg(const char *pFileName) {
 		(size = ov_read(&vf, (char *)pcmout + offset, 4096, 0, 2, 1, (int *)&sel)) > 0;
 		offset += size) {
 		if (size < 0) {
-			printf("Faulty ogg file.\n");
+			fprintf(stderr, "Faulty ogg file.\n");
 			alDeleteBuffers(1, &buffer);
 			return 0;
 		}
