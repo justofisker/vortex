@@ -2,7 +2,7 @@
 #define ECS_BUILTIN_H
 
 #include "types.h"
-#include "../audio/audio.h"
+#include <vortex/audio.h>
 #include <cglm/types.h>
 #include "../render/types.h"
 
@@ -59,13 +59,13 @@ VE_FlyCam *VE_NewFlyCam(float moveSpeed, float mouseSensitivity);
 
 typedef struct VE_SoundPlayer {
 	uint32_t _id;
-	ALuint source;
+	VE_Audio source;
 	float volume;
 	float pitch;
 	char looping;
 } VE_SoundPlayer;
 extern uint32_t VE_SoundPlayerID;
-VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping);
+VE_SoundPlayer *VE_NewSoundPlayer(VE_Audio sound, float volume, float pitch, char looping);
 void VE_PlaySoundPlayer(VE_SoundPlayer *soundPlayer);
 
 typedef struct VE_AudioListener {

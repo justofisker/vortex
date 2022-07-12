@@ -8,6 +8,7 @@
 #include <cglm/cglm.h>
 #include <math.h>
 #include <string.h>
+#include <AL/al.h>
 
 uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
