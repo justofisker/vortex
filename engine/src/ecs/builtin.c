@@ -1,14 +1,17 @@
 #define CGLM_ALL_UNALIGNED
-#include "builtin.h"
-#include "ecs.h"
+#include <cglm/cglm.h>
+#include <SDL_scancode.h>
+#include <AL/al.h>
+
+#include <vortex/components.h>
+#include <vortex/ecs.h>
+#include <vortex/audio.h>
+
 #include "globals.h"
 #include "../render/mesh.h"
 #include "../render/render.h"
 #include "../input/input.h"
-#include <cglm/cglm.h>
-#include <math.h>
-#include <string.h>
-#include <AL/al.h>
+#include "../audio/audio.h"
 
 uint32_t VE_TestComponentID = 0;
 uint32_t VE_TestComponentSpawnerID = 0;
@@ -183,8 +186,8 @@ void VE_SoundPlayer_DestroySystem(VE_SoundPlayer *soundPlayer) {
 	VE_Audio_DestroySource(soundPlayer->source);
 }
 
-VE_SoundPlayer *VE_NewSoundPlayer(ALuint sound, float volume, float pitch, char looping) {
-	ALuint source = VE_Audio_CreateSource(sound);
+VE_SoundPlayer *VE_NewSoundPlayer(VE_Audio sound, float volume, float pitch, char looping) {
+	VE_Audio source = VE_Audio_CreateSource(sound);
 	VE_SoundPlayer *pComponent = malloc(sizeof(VE_SoundPlayer));
 	*pComponent = (VE_SoundPlayer){VE_SoundPlayerID, source, volume, pitch, looping};
 	return pComponent;

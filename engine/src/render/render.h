@@ -2,7 +2,6 @@
 #define RENDER_RENDER_H
 
 #include "types.h"
-#include "../ecs/types.h"
 
 void VE_Render_Init(SDL_Window *window);
 void VE_Render_Destroy();

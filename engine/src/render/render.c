@@ -8,7 +8,6 @@
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
-#include "../ecs/ecs.h"
 #include "../ecs/builtin.h"
 #include <cglm/cglm.h>
 

@@ -2,7 +2,6 @@
 #define RENDER_GLOBALS_H
 
 #include "types.h"
-#include "../ecs/types.h"
 
 extern SDL_Window *VE_G_Window;
 extern VkInstance VE_G_Instance;

@@ -1,9 +1,9 @@
-#include "ecs.h"
-#include "globals.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <SDL.h>
+
+#include <vortex/ecs.h>
+
+#include "globals.h"
 
 uint32_t VE_ECS_RegisterComponent(const char *pComponentName, uint32_t componentSize, ComponentUpdateSystem componentUpdateSystem, ComponentDestroySystem componentDestroySystem) {
 	if (VE_G_ComponentCount >= VE_ECS_COMPONENT_MAX) {

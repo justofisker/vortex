@@ -1,14 +1,15 @@
-#ifndef ECS_ECS_H
-#define ECS_ECS_H
+#ifndef VORTEX_ECS
+#define VORTEX_ECS
 
 #include "types.h"
 
 #define VE_ECS_REGISTER_COMPONENT(component, updateSystem, destroySystem) VE_ECS_RegisterComponent(#component, sizeof(component), updateSystem, destroySystem)
+#define VE_ECS_COMPONENT_NAME(component) #component
 
 // Returns new component type's ID. If it returns VE_COMPONENT_MAX, then we are out of component slots.
 // The update system runs every frame and has two parameters, a VE_EntityT* and a void* which points to the component's data.
 // The destroy system is run when the entity is deleted, and just takes a void* which points to the component's data.
-uint32_t VE_ECS_RegisterComponent(const char* pComponentName, uint32_t componentSize, ComponentUpdateSystem componentUpdateSystem, ComponentDestroySystem componentDestroySystem);
+uint32_t VE_ECS_RegisterComponent(const char *pComponentName, uint32_t componentSize, ComponentUpdateSystem componentUpdateSystem, ComponentDestroySystem componentDestroySystem);
 // Returns the component ID, or VE_COMPONENT_MAX if it's not found.
 uint32_t VE_ECS_GetComponentIdFromName(const char *pComponentName);
 
@@ -26,4 +27,4 @@ void VE_ECS_UpdateScene();
 
 void VE_ECS_DestroyScene();
 
-#endif //ECS_ECS_H
+#endif // VORTEX_ECS

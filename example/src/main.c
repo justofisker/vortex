@@ -1,5 +1,4 @@
 #include <vortex/vortex.h>
-#include <vortex/audio.h>
 
 #include <cglm/cglm.h>
 
