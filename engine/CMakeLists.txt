@@ -6,6 +6,8 @@ file(GLOB SHADERS ${SHADER_DIR}/*.glsl)
 
 find_package(Vulkan QUIET)
 
+set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_BINARY_DIR})
+
 if (TARGET Vulkan::Vulkan)
     set(SHADER_COMPILER Vulkan::glslangValidator)
 elseif (DEFINED ENV{VULKAN_SDK})
