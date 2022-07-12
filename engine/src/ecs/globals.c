@@ -1,4 +1,5 @@
 #include "globals.h"
+#include <stddef.h>
 
 ComponentUpdateSystem VE_G_ComponentUpdateSystems[VE_ECS_COMPONENT_MAX] = { NULL };
 ComponentDestroySystem VE_G_ComponentDestroySystems[VE_ECS_COMPONENT_MAX] = { NULL };
