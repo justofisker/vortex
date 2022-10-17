@@ -22,7 +22,7 @@ char VE_Input_IsKeyJustPressed(SDL_Scancode scancode);
 typedef enum VE_MouseMode {
 	VE_MOUSEMODE_NORMAL,
 	VE_MOUSEMODE_LOCKED,
-	VE_MOUSEMODE_RELATIVE,
+	VE_MOUSEMODE_CAPTURED,
 	VE_MOUSEMODE_MAX
 } VE_MouseMode;
 

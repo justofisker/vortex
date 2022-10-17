@@ -103,45 +103,57 @@ VE_Camera *VE_NewCamera(float fov, float nearPlane, float farPlane) {
 }
 
 void VE_FlyCam_UpdateSystem(VE_EntityHandleT entityHandle, VE_FlyCam *pFlyCam) {
+	// Toggle capture mouse
 	if (VE_Input_IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
-		if (VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
+		if (VE_Input_GetMouseMode() == VE_MOUSEMODE_CAPTURED) {
             ivec2 gameSize;
             VE_Render_GetGameSize(gameSize);
             VE_Input_SetMousePosition(gameSize[0] / 2, gameSize[1] / 2);
             VE_Input_SetMouseMode(VE_MOUSEMODE_NORMAL);
         } else
-			VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
+			VE_Input_SetMouseMode(VE_MOUSEMODE_CAPTURED);
 	}
-	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
-	if (pTransform && VE_Input_GetMouseMode() == VE_MOUSEMODE_RELATIVE) {
-		vec3 forwardVec = GLM_VEC3_ZERO_INIT;
-		glm_vec3_copy(pTransform->_matrix[2], forwardVec);
-		glm_vec3_negate(forwardVec);
-		vec3 rightVec = GLM_VEC3_ZERO_INIT;
-		glm_vec3_copy(pTransform->_matrix[0], rightVec);
-		float moveSpeed = pFlyCam->moveSpeed * VE_G_DeltaSeconds;
-		glm_vec3_scale(forwardVec, moveSpeed, forwardVec);
-		glm_vec3_scale(rightVec, moveSpeed, rightVec);
-		
-		if (VE_Input_IsKeyPressed(SDL_SCANCODE_W)) {
-			glm_vec3_add(pTransform->position, forwardVec, pTransform->position);
-		}
-		if (VE_Input_IsKeyPressed(SDL_SCANCODE_S)) {
-			glm_vec3_sub(pTransform->position, forwardVec, pTransform->position);
-		}
-		if (VE_Input_IsKeyPressed(SDL_SCANCODE_D)) {
-			glm_vec3_add(pTransform->position, rightVec, pTransform->position);
-		}
-		if (VE_Input_IsKeyPressed(SDL_SCANCODE_A)) {
-			glm_vec3_sub(pTransform->position, rightVec, pTransform->position);
-		}
 
-		ivec2 mouseMotion = { 0, 0 };
-		VE_Input_GetMouseMotion(mouseMotion);
+	if (VE_Input_GetMouseMode() != VE_MOUSEMODE_CAPTURED) return;
+	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
+	if (pTransform == NULL) return;
+	
+	ivec2 mouseMotion = { 0, 0 };
+	VE_Input_GetMouseMotion(mouseMotion);
+	if (mouseMotion[0] != 0 || mouseMotion[1] != 0) {
 		pTransform->rotation[1] -= fmodf((float)mouseMotion[0] * pFlyCam->mouseSensitivity, 2.0f * GLM_PI_2f);
 		pTransform->rotation[0] -= (float)mouseMotion[1] * pFlyCam->mouseSensitivity;
 		if (pTransform->rotation[0] > GLM_PI_2f) pTransform->rotation[0] = GLM_PI_2f;
 		else if (pTransform->rotation[0] < -GLM_PI_2f) pTransform->rotation[0] = -GLM_PI_2f;
+		pTransform->_update = 1;
+
+		// Update transform for use in movement
+		VE_Transform_UpdateSystem(entityHandle, pTransform);
+	}
+
+	vec3 forwardVec = GLM_VEC3_ZERO_INIT;
+	glm_vec3_copy(pTransform->_matrix[2], forwardVec);
+	glm_vec3_negate(forwardVec);
+	vec3 rightVec = GLM_VEC3_ZERO_INIT;
+	glm_vec3_copy(pTransform->_matrix[0], rightVec);
+	float moveSpeed = pFlyCam->moveSpeed * VE_G_DeltaSeconds;
+	glm_vec3_scale(forwardVec, moveSpeed, forwardVec);
+	glm_vec3_scale(rightVec, moveSpeed, rightVec);
+
+	if (VE_Input_IsKeyPressed(SDL_SCANCODE_W)) {
+		glm_vec3_add(pTransform->position, forwardVec, pTransform->position);
+		pTransform->_update = 1;
+	}
+	if (VE_Input_IsKeyPressed(SDL_SCANCODE_S)) {
+		glm_vec3_sub(pTransform->position, forwardVec, pTransform->position);
+		pTransform->_update = 1;
+	}
+	if (VE_Input_IsKeyPressed(SDL_SCANCODE_D)) {
+		glm_vec3_add(pTransform->position, rightVec, pTransform->position);
+		pTransform->_update = 1;
+	}
+	if (VE_Input_IsKeyPressed(SDL_SCANCODE_A)) {
+		glm_vec3_sub(pTransform->position, rightVec, pTransform->position);
 		pTransform->_update = 1;
 	}
 }

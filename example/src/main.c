@@ -25,7 +25,7 @@ void VE_TestSceneComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pDa
 
 int main(int argc, char *argv[]) {
     VE_Init("ExampleVortex");
-    VE_Input_SetMouseMode(VE_MOUSEMODE_RELATIVE);
+    VE_Input_SetMouseMode(VE_MOUSEMODE_CAPTURED);
     uint32_t VE_TestSceneComponentID = VE_ECS_REGISTER_COMPONENT(VE_TestSceneComponent, VE_TestSceneComponent_UpdateSystem, NULL);
 
     VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("shaders/material.vert.spv", "shaders/material.frag.spv");

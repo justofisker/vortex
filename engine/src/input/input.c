@@ -111,7 +111,7 @@ void VE_Input_SetMouseMode(VE_MouseMode _mouseMode) {
         SDL_SetWindowMouseGrab(window, SDL_TRUE);
         SDL_SetRelativeMouseMode(SDL_FALSE);
         break;
-    case VE_MOUSEMODE_RELATIVE:
+    case VE_MOUSEMODE_CAPTURED:
         SDL_SetWindowMouseGrab(window, SDL_FALSE);
         SDL_SetRelativeMouseMode(SDL_TRUE);
         break;
