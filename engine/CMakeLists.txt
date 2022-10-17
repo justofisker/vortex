@@ -12,7 +12,7 @@ elseif (DEFINED ENV{VULKAN_SDK})
     set(SHADER_COMPILER "$ENV{VULKAN_SDK}/Bin/glslangValidator")
 endif ()
 
-set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
+set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets/shaders")
 
 foreach(SHADER IN LISTS SHADERS)
     get_filename_component(FILENAME ${SHADER} NAME_WLE)

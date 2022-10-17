@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
     VE_Input_SetMouseMode(VE_MOUSEMODE_CAPTURED);
     uint32_t VE_TestSceneComponentID = VE_ECS_REGISTER_COMPONENT(VE_TestSceneComponent, VE_TestSceneComponent_UpdateSystem, NULL);
 
-    VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("shaders/material.vert.spv", "shaders/material.frag.spv");
-    VE_ProgramT *pEnvironmentSphereProgram = VE_Render_CreateProgram("shaders/environment_sphere.vert.spv", "shaders/environment_sphere.frag.spv");
+    VE_ProgramT *pMaterialProgram = VE_Render_CreateProgram("assets/shaders/material.vert.spv", "assets/shaders/material.frag.spv");
+    VE_ProgramT *pEnvironmentSphereProgram = VE_Render_CreateProgram("assets/shaders/environment_sphere.vert.spv", "assets/shaders/environment_sphere.frag.spv");
     VE_TextureT *pTexture = VE_Render_LoadTexture("assets/textures/texture.png", NULL);
     VE_TextureT *pEnvironment = VE_Render_LoadTexture("assets/textures/environment.hdr", NULL);
 
