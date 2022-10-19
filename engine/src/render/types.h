@@ -56,12 +56,6 @@ typedef struct VE_ProgramSourceT {
     uint32_t fragmentLength;
 } VE_ProgramSourceT;
 
-typedef struct VE_Transform_T {
-    vec3 position;
-    vec3 scale;
-    versor rotation;
-} VE_Transform_T;
-
 typedef struct VE_MeshObject_T {
     VE_BufferT *pVertexBuffer;
     VE_BufferT *pIndexBuffer;
