@@ -14,5 +14,5 @@ const vec3 sun_color = vec3(1.0);
 void main() {
     float light_atten = clamp(dot(fragNorm, sun_dir), 0.1, 1.0);
     vec3 lighting = sun_color * light_atten;
-    outColor = texture(texSampler, fragTexCoord) * vec4(lighting, 1.0);
+    outColor = texture(texSampler, fragTexCoord) * vec4(fragColor * lighting, 1.0);
 }
