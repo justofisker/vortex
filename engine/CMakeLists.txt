@@ -51,6 +51,12 @@ add_library(vortex STATIC
         "src/audio/globals.h"
         "src/input/input.c"
         "src/input/input.h"
+
+        "include/vortex/audio.h"
+        "include/vortex/components.h"
+        "include/vortex/ecs.h"
+        "include/vortex/types.h"
+        "include/vortex/vortex.h"
         ${SHADERS}
         )
 
