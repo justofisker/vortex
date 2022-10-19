@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     VE_EntityHandleT entCamera = VE_ECS_CreateEntity();
     VE_ECS_InsertComponent(entCamera, VE_NewFlyCam(4.0, 0.001));
     VE_ECS_InsertComponent(entCamera, VE_NewTransform((vec3) { 2.0, 2.0, 2.0 }, (vec3) { glm_rad(-45.0), glm_rad(45.0), 0.0 }, GLM_VEC3_ONE));
-    VE_ECS_InsertComponent(entCamera, VE_NewCamera(glm_rad(60.0), 0.01, 256.0));
+    VE_ECS_InsertComponent(entCamera, VE_NewCamera(glm_rad(60.0), 0.01, 1100.0));
     VE_ECS_InsertComponent(entCamera, VE_NewAudioListener());
 
     VE_EntityHandleT entPlane = VE_ECS_CreateEntity();
@@ -57,10 +57,10 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entCylinder, VE_NewMesh(VE_Render_CreateCylinderMesh(32, 0.5f, 1.0f, pMaterialProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh*)VE_ECS_GetComponent(entCylinder, VE_MeshID))->pMeshObject, pTexture);
 
-    VE_EntityHandleT entSphere = VE_ECS_CreateEntity();
-    VE_ECS_InsertComponent(entSphere, VE_NewTransform((vec3) { 0.0f, 0.0f, 0.0f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
-    VE_ECS_InsertComponent(entSphere, VE_NewMesh(VE_Render_CreateUVSphereMesh(-128.0, 32, 64, pEnvironmentSphereProgram)));
-    VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(entSphere, VE_MeshID))->pMeshObject, pEnvironment);
+    VE_EntityHandleT entEnvironmentSphere = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entEnvironmentSphere, VE_NewTransform((vec3) { 0.0f, 0.0f, 0.0f }, GLM_VEC3_ZERO, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entEnvironmentSphere, VE_NewMesh(VE_Render_CreateUVSphereMesh(-1024.0, 32, 64, pEnvironmentSphereProgram)));
+    VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(entEnvironmentSphere, VE_MeshID))->pMeshObject, pEnvironment);
 
 
     VE_ImportedModel_T importedModel = VE_Render_ImportModel("assets/models/testModel.obj", pMaterialProgram);
