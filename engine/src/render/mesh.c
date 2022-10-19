@@ -238,73 +238,79 @@ VE_ImportedModel_T VE_Render_ImportModel(const char *pFilePath, VE_ProgramT *pPr
     const struct aiScene *pScene = aiImportFile(pFilePath, aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
     VE_ImportedModel_T importedModel = { NULL, 0, NULL, 0 };
-    
-    if (pScene) {
-        importedModel.numTextures = pScene->mNumMaterials;
-        importedModel.textures = malloc(sizeof(VE_TextureT *) * importedModel.numTextures);
-        for (uint32_t i = 0; i < importedModel.numTextures; i++) {
-            importedModel.textures[i] = NULL;
-            struct aiMaterial *pMaterial = pScene->mMaterials[i];
-            struct aiString texPath;
-            if (aiGetMaterialString(pMaterial, AI_MATKEY_TEXTURE_DIFFUSE(0), &texPath) == aiReturn_SUCCESS) {
-                uint32_t pathEnd = 0;
-                char c = pFilePath[0];
-                uint32_t j = 0;
-                while (c != '\0') {
-                    if (c == '/' || c == '\\') {
-                        pathEnd = j;
-                    }
-                    c = pFilePath[j];
-                    j++;
+
+    if (pScene == NULL) {
+        fprintf(stderr, "Failed to import %s: %s", pFilePath, aiGetErrorString());
+        exit(0);
+    }
+
+    importedModel.numTextures = pScene->mNumMaterials;
+    importedModel.textures = malloc(sizeof(VE_TextureT *) * importedModel.numTextures);
+    for (uint32_t i = 0; i < importedModel.numTextures; i++) {
+        importedModel.textures[i] = NULL;
+        struct aiMaterial *pMaterial = pScene->mMaterials[i];
+        struct aiString texPath;
+        if (aiGetMaterialString(pMaterial, AI_MATKEY_TEXTURE_DIFFUSE(0), &texPath) == aiReturn_SUCCESS) {
+            uint32_t pathEnd = 0;
+            char c = pFilePath[0];
+            uint32_t j = 0;
+            while (c != '\0') {
+                if (c == '/' || c == '\\') {
+                    pathEnd = j;
                 }
-                char *pTexPath = malloc(pathEnd + texPath.length + 1);
-                memcpy(pTexPath, pFilePath, pathEnd);
-                memcpy(pTexPath + pathEnd, texPath.data, texPath.length + 1);
-                importedModel.textures[i] = VE_Render_LoadTexture(pTexPath, NULL);
+                c = pFilePath[j];
+                j++;
             }
-        }
-
-        importedModel.numMeshes = pScene->mNumMeshes;
-        importedModel.meshes = malloc(sizeof(VE_MeshObject_T *) * importedModel.numMeshes);
-        for (uint32_t i = 0; i < importedModel.numMeshes; i++) {
-            struct aiMesh *pAiMesh = pScene->mMeshes[i];
-            VE_VertexT *pVertices = malloc(sizeof(VE_VertexT) * pAiMesh->mNumVertices);
-            for (uint32_t j = 0; j < pAiMesh->mNumVertices; j++) {
-                vec3 color = GLM_VEC3_ONE_INIT;
-                if (pAiMesh->mColors[0]) {
-                    color[0] = pAiMesh->mColors[0][j].r;
-                    color[1] = pAiMesh->mColors[0][j].g;
-                    color[2] = pAiMesh->mColors[0][j].b;
-                }
-                vec2 texCoord = GLM_VEC2_ZERO_INIT;
-                if (pAiMesh->mTextureCoords[0]) {
-                    texCoord[0] = pAiMesh->mTextureCoords[0][j].x;
-                    texCoord[1] = pAiMesh->mTextureCoords[0][j].y;
-                }
-                pVertices[j] = (VE_VertexT){
-                    {pAiMesh->mVertices[j].x, pAiMesh->mVertices[j].y, pAiMesh->mVertices[j].z},
-                    {color[0], color[1], color[2]},
-                    {pAiMesh->mNormals[j].x, pAiMesh->mNormals[j].y, pAiMesh->mNormals[j].z},
-                    {texCoord[0], texCoord[1]}
-                };
-            }
-
-            uint16_t *pIndices = malloc(sizeof(uint16_t) * pAiMesh->mNumFaces * 3);
-            for (uint32_t j = 0; j < pAiMesh->mNumFaces; j++) {
-                pIndices[j * 3] = pAiMesh->mFaces[j].mIndices[0];
-                pIndices[j * 3 + 1] = pAiMesh->mFaces[j].mIndices[1];
-                pIndices[j * 3 + 2] = pAiMesh->mFaces[j].mIndices[2];
-            }
-
-            VE_MeshObject_T *pMesh = VE_Render_CreateMeshObject(pVertices, pAiMesh->mNumVertices, pIndices, pAiMesh->mNumFaces * 3, pProgram);
-
-            if (importedModel.textures[pAiMesh->mMaterialIndex]) {
-                VE_Render_SetMeshObjectTexture(pMesh, importedModel.textures[pAiMesh->mMaterialIndex]);
-            }
-
-            importedModel.meshes[i] = pMesh;
+            char *pTexPath = malloc(pathEnd + texPath.length + 1);
+            memcpy(pTexPath, pFilePath, pathEnd);
+            memcpy(pTexPath + pathEnd, texPath.data, texPath.length + 1);
+            importedModel.textures[i] = VE_Render_LoadTexture(pTexPath, NULL);
+            free(pTexPath);
         }
     }
+
+    importedModel.numMeshes = pScene->mNumMeshes;
+    importedModel.meshes = malloc(sizeof(VE_MeshObject_T *) * importedModel.numMeshes);
+    for (uint32_t i = 0; i < importedModel.numMeshes; i++) {
+        struct aiMesh *pAiMesh = pScene->mMeshes[i];
+        VE_VertexT *pVertices = malloc(sizeof(VE_VertexT) * pAiMesh->mNumVertices);
+        for (uint32_t j = 0; j < pAiMesh->mNumVertices; j++) {
+            vec3 color = GLM_VEC3_ONE_INIT;
+            if (pAiMesh->mColors[0]) {
+                color[0] = pAiMesh->mColors[0][j].r;
+                color[1] = pAiMesh->mColors[0][j].g;
+                color[2] = pAiMesh->mColors[0][j].b;
+            }
+            vec2 texCoord = GLM_VEC2_ZERO_INIT;
+            if (pAiMesh->mTextureCoords[0]) {
+                texCoord[0] = pAiMesh->mTextureCoords[0][j].x;
+                texCoord[1] = pAiMesh->mTextureCoords[0][j].y;
+            }
+            pVertices[j] = (VE_VertexT){
+                {pAiMesh->mVertices[j].x, pAiMesh->mVertices[j].y, pAiMesh->mVertices[j].z},
+                {color[0], color[1], color[2]},
+                {pAiMesh->mNormals[j].x, pAiMesh->mNormals[j].y, pAiMesh->mNormals[j].z},
+                {texCoord[0], texCoord[1]}
+            };
+        }
+
+        uint16_t *pIndices = malloc(sizeof(uint16_t) * pAiMesh->mNumFaces * 3);
+        for (uint32_t j = 0; j < pAiMesh->mNumFaces; j++) {
+            pIndices[j * 3] = pAiMesh->mFaces[j].mIndices[0];
+            pIndices[j * 3 + 1] = pAiMesh->mFaces[j].mIndices[1];
+            pIndices[j * 3 + 2] = pAiMesh->mFaces[j].mIndices[2];
+        }
+
+        VE_MeshObject_T *pMesh = VE_Render_CreateMeshObject(pVertices, pAiMesh->mNumVertices, pIndices, pAiMesh->mNumFaces * 3, pProgram);
+
+        if (importedModel.textures[pAiMesh->mMaterialIndex]) {
+            VE_Render_SetMeshObjectTexture(pMesh, importedModel.textures[pAiMesh->mMaterialIndex]);
+        }
+
+        importedModel.meshes[i] = pMesh;
+    }
+
+    aiReleaseImport(pScene);
 
     return importedModel;
 }
