@@ -35,6 +35,10 @@ uint32_t VE_G_MeshEntityCount = 0;
 VE_MeshObject_T *VE_G_pMeshEntities[256] = { NULL };
 mat4 VE_G_ProjectionMatrix = GLM_MAT4_IDENTITY_INIT;
 mat4 VE_G_ViewMatrix = GLM_MAT4_IDENTITY_INIT;
+VE_FragmentShaderPushConstants_t VE_G_ShaderPushConstants = { 
+															1.0f, 0.0f, 0.0f,	// sunDir
+															1.0, 1.0, 1.0		// sunColor
+															};
 #ifndef NDEBUG
 VkDebugReportCallbackEXT VE_G_DebugCallback = VK_NULL_HANDLE;
 #endif // NDEBUG

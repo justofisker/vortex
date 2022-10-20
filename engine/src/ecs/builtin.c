@@ -10,6 +10,7 @@
 #include "globals.h"
 #include "../render/mesh.h"
 #include "../render/render.h"
+#include "../render/globals.h"
 #include "../input/input.h"
 #include "../audio/audio.h"
 
@@ -21,6 +22,7 @@ uint32_t VE_AudioListenerID = 0;
 uint32_t VE_MeshID = 0;
 uint32_t VE_CameraID = 0;
 uint32_t VE_FlyCamID = 0;
+uint32_t VE_DirectionalLightID = 0;
 
 void VE_TestComponent_UpdateSystem(VE_EntityHandleT entityHandle, VE_TestComponent *component) {
 	//printf("Updating component with value %i\n", component->counter);
@@ -61,9 +63,9 @@ void VE_Transform_UpdateSystem(VE_EntityHandleT entityHandle, VE_Transform *tran
 	if (transform->_update) {
         mat4 transform_mat = GLM_MAT4_IDENTITY_INIT;
 		glm_translate(transform_mat, transform->position);
-		glm_rotate(transform_mat, transform->rotation[2], GLM_ZUP);
 		glm_rotate(transform_mat, transform->rotation[1], GLM_YUP);
 		glm_rotate(transform_mat, transform->rotation[0], GLM_XUP);
+		glm_rotate(transform_mat, transform->rotation[2], GLM_ZUP);
 		glm_scale(transform_mat, transform->scale);
         glm_mat4_copy(transform_mat, transform->_matrix);
 		transform->_update = 0;
@@ -164,6 +166,26 @@ VE_FlyCam *VE_NewFlyCam(float moveSpeed, float mouseSensitivity) {
 	return pComponent;
 }
 
+void VE_DirectionalLight_UpdateSystem(VE_EntityHandleT entityHandle, VE_DirectionalLight *pDirectionalLight) {
+	VE_Transform *pTransform = VE_ECS_GetComponent(entityHandle, VE_TransformID);
+	if (pTransform) {
+		vec3 sunDir = { 1.0, 0.0, 0.0 };
+		versor rotation;
+		glm_mat4_quat(pTransform->_matrix, rotation);
+		glm_quat_rotatev(rotation, sunDir, sunDir);
+		glm_vec3_copy(sunDir, VE_G_ShaderPushConstants.sunDir);
+		glm_vec3_copy(pDirectionalLight->color, VE_G_ShaderPushConstants.sunColor);
+	} else
+		fprintf(stderr, "Attached a DirectionalLight to a entity without a transform! This makes it useless!\n");
+}
+
+VE_DirectionalLight *VE_NewDirectionalLight(vec3 color) {
+	VE_DirectionalLight *pComponent = malloc(sizeof(VE_DirectionalLight));
+	*pComponent = (VE_DirectionalLight){ VE_DirectionalLightID, GLM_VEC3_ZERO_INIT };
+	glm_vec3_copy(color, pComponent->color);
+	return pComponent;
+}
+
 void VE_Mesh_DeleteSystem(VE_Mesh *pMesh) {
     VE_Render_UnregisterEntity(pMesh->pMeshObject);
     VE_Render_DestroyMeshObject(pMesh->pMeshObject);
@@ -242,4 +264,5 @@ void VE_SetupBuiltinComponents() {
 	VE_SoundPlayerID = VE_ECS_REGISTER_COMPONENT(VE_SoundPlayer, VE_SoundPlayer_UpdateSystem, VE_SoundPlayer_DestroySystem);
 	VE_AudioListenerID = VE_ECS_REGISTER_COMPONENT(VE_AudioListener, VE_AudioListener_UpdateSystem, NULL);
 	VE_FlyCamID = VE_ECS_REGISTER_COMPONENT(VE_FlyCam, VE_FlyCam_UpdateSystem, NULL);
+	VE_DirectionalLightID = VE_ECS_REGISTER_COMPONENT(VE_DirectionalLight, VE_DirectionalLight_UpdateSystem, NULL);
 }

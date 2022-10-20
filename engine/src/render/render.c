@@ -163,14 +163,19 @@ void VE_Render_EndFrame() {
 }
 
 void VE_Render_Draw(VE_MeshObject_T *pMeshObject) {
-    vkCmdBindPipeline(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->pipeline);
+    VkCommandBuffer cmd = VE_G_pCommandBuffers[VE_G_CurrentFrame];
+
+    // TODO: This should only be called once per frame
+    vkCmdPushConstants(cmd, pMeshObject->pProgram->layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(VE_FragmentShaderPushConstants_t), &VE_G_ShaderPushConstants);
+    
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->pipeline);
 
     VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(VE_G_pCommandBuffers[VE_G_CurrentFrame], 0, 1, &pMeshObject->pVertexBuffer->buffer, offsets);
-    vkCmdBindIndexBuffer(VE_G_pCommandBuffers[VE_G_CurrentFrame], pMeshObject->pIndexBuffer->buffer, 0, VK_INDEX_TYPE_UINT16);
-    vkCmdBindDescriptorSets(VE_G_pCommandBuffers[VE_G_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->layout, 0, 1, &pMeshObject->pDescriptorSets[VE_G_CurrentFrame], 0, NULL);
+    vkCmdBindVertexBuffers(cmd, 0, 1, &pMeshObject->pVertexBuffer->buffer, offsets);
+    vkCmdBindIndexBuffer(cmd, pMeshObject->pIndexBuffer->buffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pMeshObject->pProgram->layout, 0, 1, &pMeshObject->pDescriptorSets[VE_G_CurrentFrame], 0, NULL);
 
-    vkCmdDrawIndexed(VE_G_pCommandBuffers[VE_G_CurrentFrame], pMeshObject->pIndexBuffer->instanceCount, 1, 0, 0, 0);
+    vkCmdDrawIndexed(cmd, pMeshObject->pIndexBuffer->instanceCount, 1, 0, 0, 0);
 }
 
 void VE_Render_RenderScene() {

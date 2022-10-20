@@ -6,6 +6,7 @@ typedef struct VE_TestSceneComponent {
     uint32_t _id;
     VE_EntityHandleT entPlane;
     VE_EntityHandleT entCylinder;
+    VE_EntityHandleT entDirectionalLight;
 } VE_TestSceneComponent;
 
 void VE_TestSceneComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pData) {
@@ -20,6 +21,11 @@ void VE_TestSceneComponent_UpdateSystem(VE_EntityHandleT entityHandle, void *pDa
     if (cylinderTransform) {
         cylinderTransform->rotation[2] = SDL_GetTicks() / 1000.0f;
         cylinderTransform->_update = 1;
+    }
+    VE_Transform *directionalLightTransform = VE_ECS_GetComponent(testSceneComponent->entDirectionalLight, VE_TransformID);
+    if (directionalLightTransform) {
+        directionalLightTransform->rotation[1] = SDL_GetTicks() / 1000.0f;
+        directionalLightTransform->_update = 1;
     }
 }
 
@@ -62,6 +68,9 @@ int main(int argc, char *argv[]) {
     VE_ECS_InsertComponent(entEnvironmentSphere, VE_NewMesh(VE_Render_CreateUVSphereMesh(-1024.0, 32, 64, pEnvironmentSphereProgram)));
     VE_Render_SetMeshObjectTexture(((VE_Mesh *)VE_ECS_GetComponent(entEnvironmentSphere, VE_MeshID))->pMeshObject, pEnvironment);
 
+    VE_EntityHandleT entDirectionalLight = VE_ECS_CreateEntity();
+    VE_ECS_InsertComponent(entDirectionalLight, VE_NewTransform((vec3) { 0.0f, 10.0f, 0.0f }, (vec3) { 0.0f, 0.0f, glm_rad(70.0) }, GLM_VEC3_ONE));
+    VE_ECS_InsertComponent(entDirectionalLight, VE_NewDirectionalLight((vec3) { 1.0f, 1.0f, 1.0f }));
 
     VE_ImportedModel_T importedModel = VE_Render_ImportModel("assets/models/testModel.obj", pMaterialProgram);
     VE_EntityHandleT entTestModel = VE_ECS_CreateEntity();
@@ -71,7 +80,7 @@ int main(int argc, char *argv[]) {
     }
 
     VE_TestSceneComponent *component = malloc(sizeof(VE_TestSceneComponent));
-    *component = (VE_TestSceneComponent){VE_TestSceneComponentID, entPlane, entCylinder};
+    *component = (VE_TestSceneComponent){VE_TestSceneComponentID, entPlane, entCylinder, entDirectionalLight};
     VE_ECS_InsertComponent(entTest, component);
 
     VE_Run();

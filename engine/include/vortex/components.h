@@ -54,6 +54,13 @@ typedef struct VE_FlyCam {
 extern uint32_t VE_FlyCamID;
 VE_FlyCam *VE_NewFlyCam(float moveSpeed, float mouseSensitivity);
 
+typedef struct VE_DirectionalLight {
+	uint32_t id;
+	vec3 color;
+} VE_DirectionalLight;
+extern uint32_t VE_DirectionalLightID;
+VE_DirectionalLight *VE_NewDirectionalLight(vec3 color);
+
 typedef struct VE_SoundPlayer {
 	uint32_t _id;
 	VE_Audio source;

@@ -37,6 +37,7 @@ extern uint32_t VE_G_MeshEntityCount;
 extern VE_MeshObject_T *VE_G_pMeshEntities[256];
 extern mat4 VE_G_ProjectionMatrix;
 extern mat4 VE_G_ViewMatrix;
+extern VE_FragmentShaderPushConstants_t VE_G_ShaderPushConstants;
 #ifndef NDEBUG
 extern VkDebugReportCallbackEXT VE_G_DebugCallback;
 #endif // NDEBUG

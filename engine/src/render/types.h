@@ -5,6 +5,12 @@
 #include <vulkan/vulkan.h>
 #include <cglm/types.h>
 
+#ifdef _MSC_VER
+#define alignas(x) __declspec(align(x))
+#else
+#include <stdalign.h>
+#endif
+
 #define VE_RENDER_MAX_FRAMES_IN_FLIGHT 2
 #define VE_RENDER_MAX_PROGRAMS 128
 
@@ -73,5 +79,10 @@ typedef struct VE_ImportedModel_T {
     VE_TextureT **textures;
     uint32_t numTextures;
 } VE_ImportedModel_T;
+
+typedef struct VE_FragmentShaderPushConstants_t {
+    vec3 sunDir;
+    alignas(16) vec3 sunColor;
+} VE_FragmentShaderPushConstants_t;
 
 #endif //RENDER_TYPES_H

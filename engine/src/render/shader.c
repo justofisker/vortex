@@ -298,12 +298,17 @@ void VE_Render_CreateGraphicsPipeline(VE_ProgramT *pProgram, VE_ProgramSourceT *
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
+    VkPushConstantRange fragmentPushConstants;
+    fragmentPushConstants.offset = 0;
+    fragmentPushConstants.size = sizeof(VE_FragmentShaderPushConstants_t);
+    fragmentPushConstants.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = pProgram->descriptorSetLayoutCount;
     pipelineLayoutInfo.pSetLayouts = pProgram->pDescriptorSetLayouts;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = NULL;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &fragmentPushConstants;
 
     vkCreatePipelineLayout(VE_G_Device, &pipelineLayoutInfo, NULL, &pProgram->layout);
 
